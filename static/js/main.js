@@ -21,8 +21,8 @@ function configChart(dailyVisits, titleTop100, domainTop100, keyword) {
 function initCharts(dailyVisits, titleTop, domainTop, keyword) {
   return function(ec) {
     initDailyVisits(ec, dailyVisits, keyword);
-    initTop10(ec, titleTop, 'titleTop10', 'TOP10 sites(by title)');
-    initTop10(ec, domainTop, 'domainTop10', 'TOP10 sites(by domain)');
+    initTop10(ec, titleTop, 'titleTop10', 'TOP10 sites(by title)', keyword);
+    initTop10(ec, domainTop, 'domainTop10', 'TOP10 sites(by domain)', keyword);
   };
 }
 
@@ -97,20 +97,25 @@ function initDailyVisits(ec, dailyVisits, keyword) {
 
 }
 
-function initTop10(ec, topItems, eleId, title) {
+function initTop10(ec, topItems, eleId, title, keyword) {
+  var ecConfig = require('echarts/config');
   var URLsPercentChart = ec.init(document.getElementById(eleId));
   var topLimit = topItems.length < 10 ? topItems.length : 10;
   var top10DataSource = [];
   var top10Titles = [];
+  var fullNames = []; // Store full names for click handler
+  
   for (var i = 0; i < topLimit; i++) {
     var head = topItems[i][0];
-    head = head.length > 50 ? head.substring(0, 50) : head;
-    top10Titles.push(head);
-    top10DataSource.push({value: topItems[i][1], name: head});
+    fullNames.push(head); // Store full name
+    var displayHead = head.length > 50 ? head.substring(0, 50) : head;
+    top10Titles.push(displayHead);
+    top10DataSource.push({value: topItems[i][1], name: displayHead, fullName: head});
   }
   URLsPercentChart.setOption({
     title : {
       text: title,
+      subtext: 'Click any node to filter results',
       x:'center'
     },
     tooltip : {
@@ -153,6 +158,14 @@ function initTop10(ec, topItems, eleId, title) {
         data: top10DataSource
       }
     ]
+  });
+  
+  // Add click handler to filter by clicked item
+  URLsPercentChart.on(ecConfig.EVENT.CLICK, function(params) {
+    let range = $('#browse_range').data('daterangepicker');
+    let clickedName = params.data.fullName || params.name;
+    let searchKeyword = keyword ? keyword + ' ' + clickedName : clickedName;
+    window.location = `/?start=${range.startDate.format(SHOW_FORMAT)}&end=${range.endDate.format(SHOW_FORMAT)}&keyword=${encodeURIComponent(searchKeyword)}`;
   });
 }
 

@@ -88,6 +88,21 @@
         <div id="domainTop10" style="height:500px;border:1px solid #ccc;padding:10px;"></div>
       </div>
       <div class="row table-responsive">
+        <h3 style="margin: 0 0 20px 0">Recent History (Most Recent 100)</h3>
+        <table class="table table-striped">
+          <tr>
+            <th>Time</th>
+            <th>Title</th>
+          </tr>
+          {%  for visit in recent_visits %}
+          <tr>
+            <td>{{ format_as_ymd(visit.visit_time) }} {{ format_as_hms(visit.visit_time) }}</td>
+            <td><a href="{{ visit.url }}">{{ format_title(visit.title, visit.url) }}</a></td>
+          </tr>
+          {%  endfor %}
+        </table>
+      </div>
+      <div class="row table-responsive">
         <h3 style="margin: 0 0 20px 0">TOP 100 by title</h3>
         <table class="table table-striped">
           <tr>

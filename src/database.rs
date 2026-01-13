@@ -431,4 +431,58 @@ FROM
 
         Ok(time_range)
     }
+
+    pub fn select_recent_visits(
+        &self,
+        start: i64,
+        end: i64,
+        keyword: Option<String>,
+        limit: i64,
+    ) -> Result<Vec<VisitDetail>> {
+        let sql = format!(
+            r#"
+SELECT
+    url,
+    title,
+    CAST(visit_time / 1000 as integer),
+    visit_type
+FROM
+    onehistory_urls u,
+    onehistory_visits v ON u.id = v.item_id
+WHERE
+    visit_time BETWEEN :start AND :end and {}
+ORDER BY
+    visit_time DESC
+LIMIT :limit
+"#,
+            Self::keyword_to_like(keyword)
+        );
+
+        let conn = self.conn.lock().unwrap();
+        let mut stat = conn.prepare(&sql)?;
+
+        let rows = stat.query_map(
+            named_params! {
+                ":start": Self::unixepoch_to_prtime(start),
+                ":end": Self::unixepoch_to_prtime(end),
+                ":limit": limit,
+            },
+            |row| {
+                let detail = VisitDetail {
+                    url: row.get(0)?,
+                    title: row.get(1).unwrap_or_else(|_| "".to_string()),
+                    visit_time: row.get(2)?,
+                    visit_type: 0,
+                };
+                Ok(detail)
+            },
+        )?;
+
+        let mut res: Vec<VisitDetail> = Vec::new();
+        for r in rows {
+            res.push(r?);
+        }
+
+        Ok(res)
+    }
 }

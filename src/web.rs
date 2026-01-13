@@ -131,6 +131,12 @@ impl Server {
             .select_domain_top100(start, end, keyword.clone())
             .context("domain_top100")
             .map_err(ServerError::from)?;
+        
+        // Get recent visits chronologically (most recent first, limited to 100)
+        let recent_visits = db
+            .select_recent_visits(start, end, keyword.clone(), 100)
+            .context("recent_visits")
+            .map_err(ServerError::from)?;
 
         let asset = Asset::get("index.html").unwrap();
         let index_tmpl: &str =
@@ -139,6 +145,10 @@ impl Server {
         env.add_template("index", index_tmpl)
             .map_err(|e| ServerError::from(Error::from(e)))?;
 
+        env.add_function("format_as_ymd", minijinja_format_as_ymd);
+        env.add_function("format_as_hms", minijinja_format_as_hms);
+        env.add_function("format_title", minijinja_format_title);
+        
         let tmpl = env.get_template("index").unwrap();
         let body = tmpl
             .render(context!(
@@ -149,6 +159,7 @@ impl Server {
                 daily_counts => daily_counts,
                 title_top100 => title_top100,
                 domain_top100 => domain_top100,
+                recent_visits => recent_visits,
                 keyword => keyword.unwrap_or_default(),
                 version => clap::crate_version!(),
             ))
