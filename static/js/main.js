@@ -162,7 +162,7 @@ function initTop10(ec, topItems, eleId, title, keyword) {
   URLsPercentChart.on(ecConfig.EVENT.CLICK, function(params) {
     let range = $('#browse_range').data('daterangepicker');
     let clickedName = params.data.fullName || params.name;
-    let searchKeyword = keyword ? keyword + ' ' + clickedName : clickedName;
+    let searchKeyword = keyword ? (keyword.trim() + ' ' + clickedName.trim()).trim() : clickedName;
     window.location = `/?start=${range.startDate.format(SHOW_FORMAT)}&end=${range.endDate.format(SHOW_FORMAT)}&keyword=${encodeURIComponent(searchKeyword)}`;
   });
 }
