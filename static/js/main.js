@@ -103,11 +103,9 @@ function initTop10(ec, topItems, eleId, title, keyword) {
   var topLimit = topItems.length < 10 ? topItems.length : 10;
   var top10DataSource = [];
   var top10Titles = [];
-  var fullNames = []; // Store full names for click handler
   
   for (var i = 0; i < topLimit; i++) {
     var head = topItems[i][0];
-    fullNames.push(head); // Store full name
     var displayHead = head.length > 50 ? head.substring(0, 50) : head;
     top10Titles.push(displayHead);
     top10DataSource.push({value: topItems[i][1], name: displayHead, fullName: head});

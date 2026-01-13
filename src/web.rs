@@ -22,6 +22,7 @@ use warp::{
 };
 
 const DEFAULT_SEARCH_INTERVAL: i64 = 3_600_000 * 24 * 30; // 30 days
+const MS_PER_DAY: i64 = 3_600_000 * 24; // milliseconds in a day
 #[derive(RustEmbed)]
 #[folder = "static"]
 struct Asset;
@@ -64,7 +65,7 @@ impl Server {
         query_params: DetailsQueryParams,
     ) -> Result<impl Reply, Rejection> {
         let start = ymd_midnight(&ymd).map_err(ClientError::from)?;
-        let end = start + 3_600_000 * 24;
+        let end = start + MS_PER_DAY;
         let keyword = query_params.keyword;
         let visit_details = db
             .select_visits(start, end, keyword.clone())
@@ -102,7 +103,7 @@ impl Server {
             .end
             .map_or_else(
                 || Ok(tomorrow_midnight() - 1),
-                |ymd| ymd_midnight(&ymd).map(|ts| ts + 3_600_000 * 24 - 1),
+                |ymd| ymd_midnight(&ymd).map(|ts| ts + MS_PER_DAY - 1),
             )
             .map_err(ClientError::from)?;
         let start = query_params
