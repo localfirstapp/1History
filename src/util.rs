@@ -155,11 +155,7 @@ pub fn minijinja_format_title(
     title: String,
     url: String,
 ) -> Result<String, minijinja::Error> {
-    if title.is_empty() {
-        Ok(url)
-    } else {
-        Ok(title)
-    }
+    if title.is_empty() { Ok(url) } else { Ok(title) }
 }
 
 pub fn domain_from(url: String) -> String {

@@ -12,7 +12,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 use env_logger::Env;
 use export::export_csv;
-use log::{debug, error, info, LevelFilter};
+use log::{LevelFilter, debug, error, info};
 use std::io::Write;
 use util::detect_history_files;
 
