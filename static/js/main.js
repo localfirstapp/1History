@@ -154,6 +154,15 @@ function initTop10(ec, topItems, eleId, title) {
       }
     ]
   });
+  if (eleId === 'domainTop10') {
+    var ecConfig = require('echarts/config');
+    URLsPercentChart.on(ecConfig.EVENT.CLICK, function(params) {
+      let range = $('#browse_range').data('daterangepicker');
+      let start = range ? range.startDate.format(SHOW_FORMAT) : '';
+      let end = range ? range.endDate.format(SHOW_FORMAT) : '';
+      window.location = `/?start=${start}&end=${end}&keyword=${encodeURIComponent(params.name)}`;
+    });
+  }
 }
 
 function chooseDaterangeCB(start, end) {

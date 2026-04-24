@@ -2,7 +2,8 @@ use crate::{
     database::Database,
     types::{ClientError, DetailsQueryParams, ErrorMessage, IndexQueryParams, ServerError},
     util::{
-        full_timerange, minijinja_format_as_hms, minijinja_format_as_ymd, minijinja_format_title,
+        full_timerange, minijinja_format_as_hms, minijinja_format_as_ymd,
+        minijinja_format_as_ymdhms, minijinja_format_title,
         tomorrow_midnight, ymd_midnight,
     },
 };
@@ -132,6 +133,14 @@ impl Server {
             .context("domain_top100")
             .map_err(ServerError::from)?;
 
+        let visit_details = if keyword.is_some() {
+            db.select_visits(start, end, keyword.clone())
+                .context("visit_details")
+                .map_err(ServerError::from)?
+        } else {
+            vec![]
+        };
+
         let asset = Asset::get("index.html").unwrap();
         let index_tmpl: &str =
             std::str::from_utf8(&asset.data).map_err(|e| ServerError::from(Error::from(e)))?;
@@ -139,6 +148,8 @@ impl Server {
         env.add_template("index", index_tmpl)
             .map_err(|e| ServerError::from(Error::from(e)))?;
 
+        env.add_function("format_as_ymdhms", minijinja_format_as_ymdhms);
+        env.add_function("format_title", minijinja_format_title);
         let tmpl = env.get_template("index").unwrap();
         let body = tmpl
             .render(context!(
@@ -149,6 +160,7 @@ impl Server {
                 daily_counts => daily_counts,
                 title_top100 => title_top100,
                 domain_top100 => domain_top100,
+                visit_details => visit_details,
                 keyword => keyword.unwrap_or_default(),
                 version => clap::crate_version!(),
             ))

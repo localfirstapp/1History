@@ -150,6 +150,10 @@ pub fn minijinja_format_as_hms(_state: &State, ts: i64) -> Result<String, miniji
     Ok(unixepoch_as_hms(ts))
 }
 
+pub fn minijinja_format_as_ymdhms(_state: &State, ts: i64) -> Result<String, minijinja::Error> {
+    Ok(unixepoch_as_ymdhms(ts))
+}
+
 pub fn minijinja_format_title(
     _state: &State,
     title: String,

@@ -117,13 +117,30 @@
           {%  endfor %}
         </table>
       </div>
+      {% if visit_details %}
+      <div class="row table-responsive">
+        <h3 style="margin: 0 0 20px 0">Search results ({{ visit_details | length }} records, chronological)</h3>
+        <table class="table table-striped">
+          <tr>
+            <th>Time</th>
+            <th>Title</th>
+          </tr>
+          {% for detail in visit_details %}
+          <tr>
+            <td>{{ format_as_ymdhms(detail.visit_time) }}</td>
+            <td><a href="{{ detail.url }}">{{ format_title(detail.title, detail.url) }}</a></td>
+          </tr>
+          {% endfor %}
+        </table>
+      </div>
+      {% endif %}
     </div>
 
     <footer class="footer">
       <div class="container text-center">
         <p class="text-muted">
         </p>
-        <p><a href="https://github.com/1History/1History" target="_blank"><i class="glyphicon glyphicon-menu-left"></i><i class="glyphicon glyphicon-menu-right"></i></a> With <i class="glyphicon glyphicon-heart"></i> by <a href="https://twitter.com/liujiacai" target="_blank">Jiacai Liu.</a> Current version: {{ version }}</p>
+        <p><a href="https://github.com/localfirstapp/1History" target="_blank"><i class="glyphicon glyphicon-menu-left"></i><i class="glyphicon glyphicon-menu-right"></i></a> With <i class="glyphicon glyphicon-heart"></i> by <a href="mailto:dev@liujiacai.net" target="_blank">Jiacai Liu.</a> Current version: {{ version }}</p>
       </div>
     </footer>
   </body>
