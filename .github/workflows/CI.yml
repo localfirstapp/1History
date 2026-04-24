@@ -3,12 +3,17 @@ name: 'CI'
 on:
   workflow_dispatch:
   pull_request:
-  push:
-    branches:
-      - master
-      - main
     paths:
-      - '**.rs'
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  push:
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+    branches:
+      - main
 
 # Make sure CI fails on all warnings, including Clippy lints
 env:
@@ -19,7 +24,7 @@ jobs:
     timeout-minutes: 20
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
@@ -33,7 +38,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}
       - run: |
-          cargo clippy --all-targets --all-features
-          cargo fmt -- --check
+          make check
       - run: |
-          cargo test
+          make clippy
+      - run: |
+          make test

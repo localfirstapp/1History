@@ -6,3 +6,17 @@ serve:
 
 publish:
 	cargo publish --registry github --token $(CARGO_REGISTRY_TOKEN)
+
+clippy:
+	cargo clippy --all-targets --all-features
+
+fix:
+	cargo fmt
+	cargo clippy --all-targets --all-features --fix --allow-dirty
+	cargo fix --allow-dirty
+
+check:
+	cargo fmt -- --check
+
+test:
+	cargo test

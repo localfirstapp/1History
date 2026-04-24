@@ -126,15 +126,16 @@ INSERT INTO onehistory_visits (item_id, visit_time, visit_type)
                 Ok(ret) => affected += ret,
                 Err(e) => {
                     if let sqlError::SqliteFailure(ffi_err, _msg) = &e
-                        && ffi_err.code == ErrorCode::ConstraintViolation {
-                            duplicated += 1;
-                            let ext_code = ffi_err.extended_code;
-                            debug!(
-                                "[ignore]onehistory_visits duplicated. id:{item_id}, \
+                        && ffi_err.code == ErrorCode::ConstraintViolation
+                    {
+                        duplicated += 1;
+                        let ext_code = ffi_err.extended_code;
+                        debug!(
+                            "[ignore]onehistory_visits duplicated. id:{item_id}, \
                                       time:{visit_time}, type:{visit_type}, ext_code:{ext_code}"
-                            );
-                            continue;
-                        }
+                        );
+                        continue;
+                    }
                     return Err(e.into());
                 }
             }
@@ -359,7 +360,7 @@ ORDER BY
             *total += cnt;
         }
         let mut top_arr = domain_top.into_iter().collect::<Vec<(String, i64)>>();
-        top_arr.sort_by(|a, b| b.1.cmp(&a.1));
+        top_arr.sort_by_key(|b| std::cmp::Reverse(b.1));
 
         Ok(top_arr.into_iter().take(100).collect::<Vec<_>>())
     }

@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   pull_request:
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -54,10 +59,19 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
+      - name: Set version
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "VERSION=${GITHUB_REF_NAME}" >> $GITHUB_ENV
+          else
+            echo "VERSION=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          fi
+
       - name: Package (Unix)
         if: matrix.archive == 'tar.gz'
         run: |
-          ASSET=${{ env.BIN_NAME }}-${{ github.ref_name }}-${{ matrix.target }}.tar.gz
+          ASSET=${{ env.BIN_NAME }}-${{ env.VERSION }}-${{ matrix.target }}.tar.gz
           tar -czf $ASSET -C target/${{ matrix.target }}/release ${{ env.BIN_NAME }}
           echo "ASSET=$ASSET" >> $GITHUB_ENV
 
@@ -65,14 +79,14 @@ jobs:
         if: matrix.archive == 'zip'
         shell: pwsh
         run: |
-          $ASSET = "${{ env.BIN_NAME }}-${{ github.ref_name }}-${{ matrix.target }}.zip"
+          $ASSET = "${{ env.BIN_NAME }}-${{ env.VERSION }}-${{ matrix.target }}.zip"
           Compress-Archive -Path "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" -DestinationPath $ASSET
           echo "ASSET=$ASSET" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.BIN_NAME }}-${{ github.ref_name }}-${{ matrix.target }}
+          name: ${{ env.BIN_NAME }}-${{ env.VERSION }}-${{ matrix.target }}
           path: ${{ env.ASSET }}
 
   release:
