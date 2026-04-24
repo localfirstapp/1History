@@ -48,7 +48,7 @@ jobs:
         run: sudo apt-get install -y musl-tools
 
       - name: Cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ~/.cargo/registry
@@ -84,7 +84,7 @@ jobs:
           echo "ASSET=$ASSET" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.BIN_NAME }}-${{ env.VERSION }}-${{ matrix.target }}
           path: ${{ env.ASSET }}
@@ -97,10 +97,8 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: artifacts
           merge-multiple: true
