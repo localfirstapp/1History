@@ -8,17 +8,17 @@ use crate::{
 };
 use anyhow::{Context, Error, Result};
 use log::{error, info, warn};
-use minijinja::{context, Environment};
+use minijinja::{Environment, context};
 use rust_embed::RustEmbed;
 use std::{convert::Infallible, net::SocketAddr, sync::Arc};
 use tokio::runtime::Runtime;
 use warp::{
+    Filter, Rejection, Reply,
     http::HeaderValue,
     hyper::StatusCode,
     path::Tail,
     reject,
     reply::{self, Response},
-    Filter, Rejection, Reply,
 };
 
 const DEFAULT_SEARCH_INTERVAL: i64 = 3_600_000 * 24 * 30; // 30 days

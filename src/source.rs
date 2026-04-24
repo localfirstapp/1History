@@ -1,9 +1,9 @@
 use std::{collections::HashMap, fmt::Display};
 
 use crate::types::{SourceName, VisitDetail};
-use anyhow::{bail, Context, Result};
+use anyhow::{Context, Result, bail};
 use log::debug;
-use rusqlite::{named_params, Connection, OpenFlags, Row, ToSql};
+use rusqlite::{Connection, OpenFlags, Row, ToSql, named_params};
 
 pub struct Source {
     path: String,

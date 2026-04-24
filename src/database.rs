@@ -5,7 +5,7 @@ use crate::{
 };
 use anyhow::{Context, Result};
 use log::debug;
-use rusqlite::{named_params, Connection, Error as sqlError, ErrorCode, Transaction};
+use rusqlite::{Connection, Error as sqlError, ErrorCode, Transaction, named_params};
 use std::{collections::HashMap, sync::Mutex};
 
 #[derive(Debug)]
@@ -125,8 +125,8 @@ INSERT INTO onehistory_visits (item_id, visit_time, visit_type)
             match tx.execute(sql, [&item_id, &visit_time, &visit_type]) {
                 Ok(ret) => affected += ret,
                 Err(e) => {
-                    if let sqlError::SqliteFailure(ffi_err, _msg) = &e {
-                        if ffi_err.code == ErrorCode::ConstraintViolation {
+                    if let sqlError::SqliteFailure(ffi_err, _msg) = &e
+                        && ffi_err.code == ErrorCode::ConstraintViolation {
                             duplicated += 1;
                             let ext_code = ffi_err.extended_code;
                             debug!(
@@ -135,7 +135,6 @@ INSERT INTO onehistory_visits (item_id, visit_time, visit_type)
                             );
                             continue;
                         }
-                    }
                     return Err(e.into());
                 }
             }

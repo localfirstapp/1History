@@ -1,37 +1,98 @@
-name: 'Release'
+name: Release
 
 on:
-  workflow_dispatch:
-  release:
-    types: [created]
+  push:
+    tags:
+      - 'v*'
+  pull_request:
 
 env:
   CARGO_TERM_COLOR: always
+  BIN_NAME: onehistory
 
 jobs:
-  release:
-    timeout-minutes: 30
-    name: release ${{ matrix.target }}
-    runs-on: ubuntu-latest
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        target: [x86_64-pc-windows-gnu, x86_64-unknown-linux-musl, x86_64-apple-darwin]
+        include:
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            archive: tar.gz
+          - target: aarch64-apple-darwin
+            os: macos-latest
+            archive: tar.gz
+          - target: x86_64-apple-darwin
+            os: macos-latest
+            archive: tar.gz
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            archive: zip
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: dtolnay/rust-toolchain@stable
-      - name: Cache Crates
-        uses: actions/cache@v3
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl tools
+        if: matrix.target == 'x86_64-unknown-linux-musl'
+        run: sudo apt-get install -y musl-tools
+
+      - name: Cache
+        uses: actions/cache@v4
         with:
           path: |
-            ./target
-            ~/.cargo
-          key: ${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}
-      - name: Compile and release
-        uses: rust-build/rust-build.action@latest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RUSTTARGET: ${{ matrix.target }}
-          EXTRA_FILES: "README.org"
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ matrix.target }}-${{ hashFiles('Cargo.lock') }}
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Package (Unix)
+        if: matrix.archive == 'tar.gz'
+        run: |
+          ASSET=${{ env.BIN_NAME }}-${{ github.ref_name }}-${{ matrix.target }}.tar.gz
+          tar -czf $ASSET -C target/${{ matrix.target }}/release ${{ env.BIN_NAME }}
+          echo "ASSET=$ASSET" >> $GITHUB_ENV
+
+      - name: Package (Windows)
+        if: matrix.archive == 'zip'
+        shell: pwsh
+        run: |
+          $ASSET = "${{ env.BIN_NAME }}-${{ github.ref_name }}-${{ matrix.target }}.zip"
+          Compress-Archive -Path "target/${{ matrix.target }}/release/${{ env.BIN_NAME }}.exe" -DestinationPath $ASSET
+          echo "ASSET=$ASSET" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.BIN_NAME }}-${{ github.ref_name }}-${{ matrix.target }}
+          path: ${{ env.ASSET }}
+
+  release:
+    name: Create Release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*
+          generate_release_notes: true
