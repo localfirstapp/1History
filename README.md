@@ -118,7 +118,7 @@ cargo install onehistory
 
 ## Changelog
 
-See [CHANGELOG](CHANGELOG.org)
+See [CHANGELOG](CHANGELOG.md)
 
 ## FAQ
 
