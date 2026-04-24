@@ -49,6 +49,7 @@
                      {{ title_top100 }},
                      {{ domain_top100 }},
                      '{{ keyword | escape }}');
+        updateListButton(start, end, '{{ keyword | escape }}', {{ visit_details | length }});
       })
     </script>
   </head>
@@ -72,6 +73,12 @@
             </div>
             <div class="form-group">
               <input type="submit" id="submit" class="btn btn-success" value="Search">
+            </div>
+            <div class="form-group">
+              <a id="view-list" class="btn btn-default" target="_blank">
+                <i class="glyphicon glyphicon-list"></i>
+                <span id="view-list-label">List</span>
+              </a>
             </div>
           </form>
         </div>
@@ -123,7 +130,7 @@
       <div class="container text-center">
         <p class="text-muted">
         </p>
-        <p><a href="https://github.com/1History/1History" target="_blank"><i class="glyphicon glyphicon-menu-left"></i><i class="glyphicon glyphicon-menu-right"></i></a> With <i class="glyphicon glyphicon-heart"></i> by <a href="https://twitter.com/liujiacai" target="_blank">Jiacai Liu.</a> Current version: {{ version }}</p>
+        <p><a href="https://github.com/localfirstapp/1History" target="_blank" rel="noopener noreferrer"><i class="glyphicon glyphicon-menu-left"></i><i class="glyphicon glyphicon-menu-right"></i></a> With <i class="glyphicon glyphicon-heart"></i> by <a href="https://en.liujiacai.net/" target="_blank" rel="noopener noreferrer">Jiacai Liu.</a> Current version: {{ version }}</p>
       </div>
     </footer>
   </body>

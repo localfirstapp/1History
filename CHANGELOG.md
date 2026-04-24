@@ -4,7 +4,7 @@
 
 ### Bug Fixes
 
-- Add Firefox snap flavor to supported default browser profiles ([#24](https://github.com/1History/1History/pull/24))
+- Add Firefox snap flavor to supported default browser profiles ([#24](https://github.com/localfirstapp/1History/pull/24))
 
 ## v0.3.4 (2024-03-25)
 
@@ -16,13 +16,13 @@
 
 ### Bug Fixes
 
-- If `The database file is locked` error arises during backup, copy the original SQLite db to a temp file and retry ([#19](https://github.com/1History/1History/pull/19))
+- If `The database file is locked` error arises during backup, copy the original SQLite db to a temp file and retry ([#19](https://github.com/localfirstapp/1History/pull/19))
 
 ## v0.3.2 (2022-04-18)
 
 ### Bug Fixes
 
-- Fix CSV writer handling of special characters ([#16](https://github.com/1History/1History/pull/16))
+- Fix CSV writer handling of special characters ([#16](https://github.com/localfirstapp/1History/pull/16))
 
 ## v0.3.1 (2022-08-14)
 
