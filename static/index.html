@@ -49,6 +49,7 @@
                      {{ title_top100 }},
                      {{ domain_top100 }},
                      '{{ keyword | escape }}');
+        updateListButton(start, end, '{{ keyword | escape }}', {{ visit_details | length }});
       })
     </script>
   </head>
@@ -72,6 +73,12 @@
             </div>
             <div class="form-group">
               <input type="submit" id="submit" class="btn btn-success" value="Search">
+            </div>
+            <div class="form-group">
+              <a id="view-list" class="btn btn-default" target="_blank">
+                <i class="glyphicon glyphicon-list"></i>
+                <span id="view-list-label">List</span>
+              </a>
             </div>
           </form>
         </div>
@@ -117,23 +124,6 @@
           {%  endfor %}
         </table>
       </div>
-      {% if visit_details %}
-      <div class="row table-responsive">
-        <h3 style="margin: 0 0 20px 0">Search results ({{ visit_details | length }} records, chronological)</h3>
-        <table class="table table-striped">
-          <tr>
-            <th>Time</th>
-            <th>Title</th>
-          </tr>
-          {% for detail in visit_details %}
-          <tr>
-            <td>{{ format_as_ymdhms(detail.visit_time) }}</td>
-            <td><a href="{{ detail.url }}">{{ format_title(detail.title, detail.url) }}</a></td>
-          </tr>
-          {% endfor %}
-        </table>
-      </div>
-      {% endif %}
     </div>
 
     <footer class="footer">

@@ -1,10 +1,12 @@
 use crate::{
     database::Database,
-    types::{ClientError, DetailsQueryParams, ErrorMessage, IndexQueryParams, ServerError},
+    types::{
+        ClientError, DetailsQueryParams, ErrorMessage, IndexQueryParams, SearchQueryParams,
+        ServerError,
+    },
     util::{
         full_timerange, minijinja_format_as_hms, minijinja_format_as_ymd,
-        minijinja_format_as_ymdhms, minijinja_format_title,
-        tomorrow_midnight, ymd_midnight,
+        minijinja_format_as_ymdhms, minijinja_format_title, tomorrow_midnight, ymd_midnight,
     },
 };
 use anyhow::{Context, Error, Result};
@@ -133,13 +135,10 @@ impl Server {
             .context("domain_top100")
             .map_err(ServerError::from)?;
 
-        let visit_details = if keyword.is_some() {
-            db.select_visits(start, end, keyword.clone())
-                .context("visit_details")
-                .map_err(ServerError::from)?
-        } else {
-            vec![]
-        };
+        let visit_details = db
+            .select_visits(start, end, keyword.clone())
+            .context("visit_details")
+            .map_err(ServerError::from)?;
 
         let asset = Asset::get("index.html").unwrap();
         let index_tmpl: &str =
@@ -161,6 +160,52 @@ impl Server {
                 title_top100 => title_top100,
                 domain_top100 => domain_top100,
                 visit_details => visit_details,
+                start_ymd => crate::util::unixepoch_as_ymd(start),
+                end_ymd => crate::util::unixepoch_as_ymd(end),
+                keyword => keyword.unwrap_or_default(),
+                version => clap::crate_version!(),
+            ))
+            .map_err(|e| ServerError::from(Error::from(e)))?;
+
+        Ok(reply::html(body))
+    }
+
+    async fn search(
+        db: Arc<Database>,
+        query_params: SearchQueryParams,
+    ) -> Result<impl Reply, Rejection> {
+        let end = query_params
+            .end
+            .map_or_else(|| Ok(tomorrow_midnight() - 1), |ymd| ymd_midnight(&ymd))
+            .map_err(ClientError::from)?;
+        let start = query_params
+            .start
+            .map_or_else(
+                || Ok(tomorrow_midnight() - DEFAULT_SEARCH_INTERVAL),
+                |ymd| ymd_midnight(&ymd),
+            )
+            .map_err(ClientError::from)?;
+        let keyword = query_params.keyword;
+
+        let visit_details = db
+            .select_visits(start, end, keyword.clone())
+            .context("visit_details")
+            .map_err(ServerError::from)?;
+
+        let asset = Asset::get("search.html").unwrap();
+        let tmpl_str: &str =
+            std::str::from_utf8(&asset.data).map_err(|e| ServerError::from(Error::from(e)))?;
+        let mut env = Environment::new();
+        env.add_template("search", tmpl_str)
+            .map_err(|e| ServerError::from(Error::from(e)))?;
+        env.add_function("format_as_ymdhms", minijinja_format_as_ymdhms);
+        env.add_function("format_title", minijinja_format_title);
+        let tmpl = env.get_template("search").unwrap();
+        let body = tmpl
+            .render(context!(
+                start_ymd => crate::util::unixepoch_as_ymd(start),
+                end_ymd => crate::util::unixepoch_as_ymd(end),
+                visit_details => visit_details,
                 keyword => keyword.unwrap_or_default(),
                 version => clap::crate_version!(),
             ))
@@ -181,11 +226,17 @@ impl Server {
             .and(warp::query::<DetailsQueryParams>())
             .and_then(Self::details);
 
+        let search = Self::with_db(self.db.clone())
+            .and(warp::path!("search"))
+            .and(warp::query::<SearchQueryParams>())
+            .and_then(Self::search);
+
         let static_route = warp::path("static")
             .and(warp::path::tail())
             .and_then(serve_file);
 
         let routes = detail
+            .or(search)
             .or(index)
             .or(static_route)
             .recover(Self::handle_rejection);

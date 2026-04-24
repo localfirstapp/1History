@@ -175,3 +175,11 @@ function ohsearchIndex() {
 
   window.location = `/?start=${range.startDate.format(SHOW_FORMAT)}&end=${range.endDate.format(SHOW_FORMAT)}&keyword=${encodeURIComponent(kw)}`;
 }
+
+function updateListButton(start, end, keyword, count) {
+  let params = `start=${start.format(SHOW_FORMAT)}&end=${end.format(SHOW_FORMAT)}`;
+  if (keyword) params += `&keyword=${encodeURIComponent(keyword)}`;
+  $('#view-list').attr('href', `/search?${params}`);
+  let label = keyword ? `${count} results` : `All ${count}`;
+  $('#view-list-label').text(label);
+}
