@@ -461,7 +461,7 @@ FROM
         let sql = r#"
 SELECT
     (SELECT count(1) FROM onehistory_visits WHERE visit_time BETWEEN :start AND :end) AS total_visits,
-    (SELECT count(DISTINCT u.id) FROM onehistory_visits v JOIN onehistory_urls u ON v.item_id = u.id WHERE v.visit_time BETWEEN :start AND :end) AS unique_urls,
+    (SELECT count(DISTINCT u.url) FROM onehistory_visits v JOIN onehistory_urls u ON v.item_id = u.id WHERE v.visit_time BETWEEN :start AND :end) AS unique_urls,
     (SELECT count(DISTINCT strftime('%Y-%m-%d', visit_time/1000000, 'unixepoch', 'localtime')) FROM onehistory_visits WHERE visit_time BETWEEN :start AND :end) AS active_days,
     (SELECT count(1) FROM onehistory_visits WHERE visit_time BETWEEN :today_start AND :today_end) AS today_visits
 "#;
