@@ -21,7 +21,7 @@ pub struct VisitDetail {
 #[derive(Debug, Serialize)]
 pub struct Stats {
     pub total_visits: i64,
-    pub unique_domains: i64,
+    pub unique_urls: i64,
     pub active_days: i64,
     pub today_visits: i64,
 }

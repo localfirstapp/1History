@@ -13,7 +13,7 @@ themeBtn.addEventListener('click', () => {
 })
 
 document.getElementById('kpi-total').textContent = d.stats.total_visits.toLocaleString()
-document.getElementById('kpi-domains').textContent = d.stats.unique_domains.toLocaleString()
+document.getElementById('kpi-domains').textContent = d.stats.unique_urls.toLocaleString()
 document.getElementById('kpi-days').textContent = d.stats.active_days.toLocaleString()
 document.getElementById('kpi-today').textContent = d.stats.today_visits.toLocaleString()
 
