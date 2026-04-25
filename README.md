@@ -40,29 +40,33 @@ That's it. From this point on, **everything can be done in the browser**:
 
 The CLI is only needed for the initial setup and for scripting/automation use cases.
 
-```bash
-onehistory [OPTIONS] <SUBCOMMAND>
+```
+Usage: onehistory [OPTIONS] <COMMAND>
 
-OPTIONS:
-    -d, --db-file <DB_FILE>    Database path [env: OH_DB_FILE=] [default: ~/onehistory.db]
-    -v, --verbose
+Commands:
+  backup  Backup browser history to 1History
+  serve   Start HTTP server to visualize history
+  show    Show default history files on your computer
+  export  Export history to CSV file
+  help    Print this message or the help of the given subcommand(s)
 
-SUBCOMMANDS:
-    backup    Backup browser history
-    serve     Start the web UI server
-    export    Export history to CSV
-    show      Show detected browser history files on this machine
+Options:
+  -d, --db-file <DB_FILE>  Database path [env: OH_DB_FILE=] [default: ~/onehistory.db]
+  -v, --verbose            Enable verbose logging
+  -h, --help               Print help
+  -V, --version            Print version
 ```
 
 ### backup
 
-```bash
-onehistory backup [OPTIONS]
+```
+Usage: onehistory backup [OPTIONS]
 
-OPTIONS:
-    -f, --history-files <PATH>    Extra history file(s) to import (repeatable)
-    -d, --disable-detect          Disable auto-detection of browser history files
-    -D, --dry-run                 Preview what would be imported without writing
+Options:
+  -f, --history-files <HISTORY_FILES>  SQLite file path of different browsers(History.db/places.sqlite...)
+  -d, --disable-detect                 Disable auto detect history files
+  -D, --dry-run                        Preview what would be imported without writing to the database
+  -h, --help                           Print help
 ```
 
 Auto-detection covers all major browsers. Use `-f` for non-standard locations:
