@@ -20,14 +20,16 @@ const DEFAULT_BATCH_NUM: usize = 100;
 pub(crate) struct Database {
     conn: Mutex<Connection>,
     persist_batch: usize,
+    pub file_path: String,
 }
 
 impl Database {
     pub fn open(sqlite_datafile: String) -> Result<Database> {
-        let conn = Connection::open(sqlite_datafile)?;
+        let conn = Connection::open(&sqlite_datafile)?;
         let db = Self {
             conn: Mutex::new(conn),
             persist_batch: DEFAULT_BATCH_NUM,
+            file_path: sqlite_datafile,
         };
         db.init().context("init")?;
 
@@ -430,5 +432,95 @@ FROM
         let time_range = stat.query_row([], |row| Ok((row.get(0)?, row.get(1)?)))?;
 
         Ok(time_range)
+    }
+
+    pub fn select_stats(&self, start: i64, end: i64) -> Result<crate::types::Stats> {
+        let today_start = crate::util::tomorrow_midnight() - 86_400_000;
+        let today_end = crate::util::tomorrow_midnight() - 1;
+        let sql = r#"
+SELECT
+    (SELECT count(1) FROM onehistory_visits WHERE visit_time BETWEEN :start AND :end) AS total_visits,
+    (SELECT count(DISTINCT u.id) FROM onehistory_visits v JOIN onehistory_urls u ON v.item_id = u.id WHERE v.visit_time BETWEEN :start AND :end) AS unique_domains,
+    (SELECT count(DISTINCT strftime('%Y-%m-%d', visit_time/1000000, 'unixepoch', 'localtime')) FROM onehistory_visits WHERE visit_time BETWEEN :start AND :end) AS active_days,
+    (SELECT count(1) FROM onehistory_visits WHERE visit_time BETWEEN :today_start AND :today_end) AS today_visits
+"#;
+        let conn = self.conn.lock().unwrap();
+        let mut stat = conn.prepare(sql)?;
+        let result = stat.query_row(
+            rusqlite::named_params! {
+                ":start": Self::unixepoch_to_prtime(start),
+                ":end": Self::unixepoch_to_prtime(end),
+                ":today_start": Self::unixepoch_to_prtime(today_start),
+                ":today_end": Self::unixepoch_to_prtime(today_end),
+            },
+            |row| {
+                Ok(crate::types::Stats {
+                    total_visits: row.get(0)?,
+                    unique_domains: row.get(1)?,
+                    active_days: row.get(2)?,
+                    today_visits: row.get(3)?,
+                })
+            },
+        )?;
+        Ok(result)
+    }
+
+    pub fn select_db_status(&self) -> Result<crate::types::DbStatus> {
+        use std::fs;
+        let file_size_bytes = fs::metadata(&self.file_path).map(|m| m.len()).unwrap_or(0);
+        let conn = self.conn.lock().unwrap();
+
+        let (total_visits, min_time, max_time): (i64, i64, i64) = conn.query_row(
+            "SELECT count(1), CAST(coalesce(min(visit_time),0)/1000 AS integer), CAST(coalesce(max(visit_time),0)/1000 AS integer) FROM onehistory_visits",
+            [],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+        )?;
+
+        let chrome_visits: i64 = conn
+            .query_row(
+                "SELECT count(1) FROM onehistory_visits v JOIN onehistory_urls u ON v.item_id = u.id WHERE u.url NOT LIKE 'place%' AND u.url NOT LIKE 'about:%'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
+        let firefox_visits: i64 = conn
+            .query_row(
+                "SELECT count(1) FROM onehistory_visits v JOIN onehistory_urls u ON v.item_id = u.id WHERE u.url LIKE 'place%'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
+        let safari_visits: i64 = conn
+            .query_row(
+                "SELECT count(1) FROM onehistory_visits v JOIN onehistory_urls u ON v.item_id = u.id WHERE u.url LIKE 'about:%'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap_or(0);
+
+        let mut import_stat = conn.prepare(
+            "SELECT data_path, CAST(last_import/1000 AS integer) FROM import_records ORDER BY last_import DESC",
+        )?;
+        let import_records: Vec<crate::types::ImportRecord> = import_stat
+            .query_map([], |row| {
+                Ok(crate::types::ImportRecord {
+                    data_path: row.get(0)?,
+                    last_import: row.get(1)?,
+                })
+            })?
+            .filter_map(|r| r.ok())
+            .collect();
+
+        Ok(crate::types::DbStatus {
+            file_path: self.file_path.clone(),
+            file_size_bytes,
+            total_visits,
+            min_time,
+            max_time,
+            chrome_visits,
+            firefox_visits,
+            safari_visits,
+            import_records,
+        })
     }
 }

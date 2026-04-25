@@ -1,11 +1,12 @@
 use crate::{
+    backup::backup_to_log,
     database::Database,
     types::{
-        ClientError, DetailsQueryParams, ErrorMessage, IndexQueryParams, SearchQueryParams,
-        ServerError,
+        BackupJobResponse, BackupPollResponse, BackupRequest, BackupSummary, ClientError,
+        DetailsQueryParams, ErrorMessage, IndexQueryParams, SearchQueryParams, ServerError,
     },
     util::{
-        full_timerange, minijinja_format_as_hms, minijinja_format_as_ymd,
+        detect_history_files, full_timerange, minijinja_format_as_hms, minijinja_format_as_ymd,
         minijinja_format_as_ymdhms, minijinja_format_title, tomorrow_midnight, ymd_midnight,
     },
 };
@@ -13,8 +14,14 @@ use anyhow::{Context, Error, Result};
 use log::{error, info, warn};
 use minijinja::{Environment, context};
 use rust_embed::RustEmbed;
-use std::{convert::Infallible, net::SocketAddr, sync::Arc};
+use std::{
+    collections::HashMap,
+    convert::Infallible,
+    net::SocketAddr,
+    sync::{Arc, Mutex},
+};
 use tokio::runtime::Runtime;
+use uuid::Uuid;
 use warp::{
     Filter, Rejection, Reply,
     http::HeaderValue,
@@ -25,6 +32,7 @@ use warp::{
 };
 
 const DEFAULT_SEARCH_INTERVAL: i64 = 3_600_000 * 24 * 30; // 30 days
+
 #[derive(RustEmbed)]
 #[folder = "static"]
 struct Asset;
@@ -42,16 +50,31 @@ async fn serve_file(path: Tail) -> Result<impl Reply, Rejection> {
     Ok(res)
 }
 
+type JobId = String;
+
+#[derive(Clone)]
+struct BackupJob {
+    log_lines: Arc<Mutex<Vec<String>>>,
+    status: Arc<Mutex<String>>,
+    summary: Arc<Mutex<Option<BackupSummary>>>,
+}
+
+type JobStore = Arc<Mutex<HashMap<JobId, BackupJob>>>;
+
 struct Server {
     db: Arc<Database>,
     addr: SocketAddr,
+    db_file: String,
+    jobs: JobStore,
 }
 
 impl Server {
     fn try_new(addr: String, db_filepath: String) -> Result<Self> {
         Ok(Self {
-            db: Arc::new(Database::open(db_filepath).context("open db")?),
+            db: Arc::new(Database::open(db_filepath.clone()).context("open db")?),
             addr: addr.parse()?,
+            db_file: db_filepath,
+            jobs: Arc::new(Mutex::new(HashMap::new())),
         })
     }
 
@@ -59,6 +82,16 @@ impl Server {
         db: Arc<Database>,
     ) -> impl Filter<Extract = (Arc<Database>,), Error = Infallible> + Clone {
         warp::any().map(move || db.clone())
+    }
+
+    fn with_jobs(jobs: JobStore) -> impl Filter<Extract = (JobStore,), Error = Infallible> + Clone {
+        warp::any().map(move || jobs.clone())
+    }
+
+    fn with_db_file(
+        db_file: String,
+    ) -> impl Filter<Extract = (String,), Error = Infallible> + Clone {
+        warp::any().map(move || db_file.clone())
     }
 
     async fn details(
@@ -134,10 +167,13 @@ impl Server {
             .select_domain_top100(start, end, keyword.clone())
             .context("domain_top100")
             .map_err(ServerError::from)?;
-
         let visit_details = db
             .select_visits(start, end, keyword.clone())
             .context("visit_details")
+            .map_err(ServerError::from)?;
+        let stats = db
+            .select_stats(start, end)
+            .context("stats")
             .map_err(ServerError::from)?;
 
         let asset = Asset::get("index.html").unwrap();
@@ -146,7 +182,6 @@ impl Server {
         let mut env = Environment::new();
         env.add_template("index", index_tmpl)
             .map_err(|e| ServerError::from(Error::from(e)))?;
-
         env.add_function("format_as_ymdhms", minijinja_format_as_ymdhms);
         env.add_function("format_title", minijinja_format_title);
         let tmpl = env.get_template("index").unwrap();
@@ -160,6 +195,7 @@ impl Server {
                 title_top100 => title_top100,
                 domain_top100 => domain_top100,
                 visit_details => visit_details,
+                stats => stats,
                 start_ymd => crate::util::unixepoch_as_ymd(start),
                 end_ymd => crate::util::unixepoch_as_ymd(end),
                 keyword => keyword.unwrap_or_default(),
@@ -214,6 +250,77 @@ impl Server {
         Ok(reply::html(body))
     }
 
+    async fn db_status(db: Arc<Database>) -> Result<impl Reply, Rejection> {
+        let status = db.select_db_status().map_err(ServerError::from)?;
+        Ok(warp::reply::json(&status))
+    }
+
+    async fn start_backup(
+        db_file: String,
+        jobs: JobStore,
+        req: BackupRequest,
+    ) -> Result<impl Reply, Rejection> {
+        let job_id = Uuid::new_v4().to_string();
+        let log_lines: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+        let status = Arc::new(Mutex::new("running".to_string()));
+        let summary_store: Arc<Mutex<Option<BackupSummary>>> = Arc::new(Mutex::new(None));
+
+        let job = BackupJob {
+            log_lines: Arc::clone(&log_lines),
+            status: Arc::clone(&status),
+            summary: Arc::clone(&summary_store),
+        };
+        jobs.lock().unwrap().insert(job_id.clone(), job);
+
+        tokio::task::spawn_blocking(move || {
+            let mut files = if req.disable_detect {
+                vec![]
+            } else {
+                detect_history_files()
+            };
+            files.extend(req.files);
+            match backup_to_log(files, db_file, req.dry_run, Arc::clone(&log_lines)) {
+                Ok(result) => {
+                    *summary_store.lock().unwrap() = Some(BackupSummary {
+                        found: result.found,
+                        imported: result.imported,
+                        duplicated: result.duplicated,
+                        error: None,
+                    });
+                    *status.lock().unwrap() = "done".to_string();
+                }
+                Err(e) => {
+                    *summary_store.lock().unwrap() = Some(BackupSummary {
+                        found: 0,
+                        imported: 0,
+                        duplicated: 0,
+                        error: Some(format!("{e:?}")),
+                    });
+                    *status.lock().unwrap() = "error".to_string();
+                }
+            }
+        });
+
+        Ok(warp::reply::json(&BackupJobResponse { job_id }))
+    }
+
+    async fn poll_backup(job_id: String, jobs: JobStore) -> Result<impl Reply, Rejection> {
+        let jobs = jobs.lock().unwrap();
+        let job = jobs.get(&job_id).ok_or_else(|| {
+            warp::reject::custom(ClientError {
+                e: "job not found".to_string(),
+            })
+        })?;
+        let status = job.status.lock().unwrap().clone();
+        let log_lines = job.log_lines.lock().unwrap().clone();
+        let summary = job.summary.lock().unwrap().clone();
+        Ok(warp::reply::json(&BackupPollResponse {
+            status,
+            log_lines,
+            summary,
+        }))
+    }
+
     // https://github.com/ItsNothingPersonal/warp-postgres-example/blob/main/src/main.rs#L63
     fn serve(&self) -> Result<()> {
         let index = warp::path::end()
@@ -231,12 +338,37 @@ impl Server {
             .and(warp::query::<SearchQueryParams>())
             .and_then(Self::search);
 
+        let db_status_route = warp::path!("api" / "db" / "status")
+            .and(Self::with_db(self.db.clone()))
+            .and_then(Self::db_status);
+
+        let backup_start = warp::path!("api" / "backup")
+            .and(warp::post())
+            .and(Self::with_db_file(self.db_file.clone()))
+            .and(Self::with_jobs(self.jobs.clone()))
+            .and(warp::body::json())
+            .and_then(Self::start_backup);
+
+        let backup_poll = warp::path!("api" / "backup" / String)
+            .and(warp::get())
+            .and(Self::with_jobs(self.jobs.clone()))
+            .and_then(Self::poll_backup);
+
+        let db_page = warp::path("db").and(warp::path::end()).map(|| {
+            let asset = Asset::get("db.html").unwrap();
+            reply::html(String::from_utf8_lossy(&asset.data).to_string())
+        });
+
         let static_route = warp::path("static")
             .and(warp::path::tail())
             .and_then(serve_file);
 
         let routes = detail
             .or(search)
+            .or(db_status_route)
+            .or(backup_start)
+            .or(backup_poll)
+            .or(db_page)
             .or(index)
             .or(static_route)
             .recover(Self::handle_rejection);

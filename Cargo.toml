@@ -31,3 +31,4 @@ regex = "1"
 indicatif = "0.17"
 csv = "1.2.1"
 tempfile = "3.5.0"
+uuid = { version = "1", features = ["v4"] }
