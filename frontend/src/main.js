@@ -21,18 +21,10 @@ document.getElementById('kpi-today').textContent = d.stats.today_visits.toLocale
 const fp = flatpickr('#date-range', {
   mode: 'range',
   dateFormat: 'Y-m-d',
-  defaultDate: [d.startYmd, d.endYmd],
   minDate: new Date(d.minTime),
   maxDate: new Date(d.maxTime),
-  onReady(_, __, self) {
-    setTimeout(() => {
-      const dates = self.selectedDates
-      if (!self.input.value && dates.length === 2) {
-        self.input.value = `${self.formatDate(dates[0], 'Y-m-d')} to ${self.formatDate(dates[1], 'Y-m-d')}`
-      }
-    }, 0)
-  },
 })
+fp.setDate([d.startYmd, d.endYmd], false)
 
 document.getElementById('keyword').value = d.keyword
 
