@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #ffffff;
+  --bg-card: #f8f9fa;
+  --text: #1a1a1a;
+  --text-muted: #6b7280;
+  --border: #e5e7eb;
+  --accent: #4A90D9;
+  --accent-hover: #357abd;
+}
+
+[data-theme="dark"] {
+  --bg: #0f1117;
+  --bg-card: #1a1d2e;
+  --text: #e2e8f0;
+  --text-muted: #6b7280;
+  --border: #2a2d3e;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.btn {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn:hover { background: var(--accent-hover); }
+
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-size: 14px;
+}
+.btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+nav {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-brand {
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; padding: 8px 12px; font-size: 12px; color: var(--text-muted); text-transform: uppercase; border-bottom: 1px solid var(--border); }
+td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
