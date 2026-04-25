@@ -11,7 +11,7 @@
 
 ## Features
 
-- Modern web UI — dashboard, full-text search, in-browser backup
+- Modern web UI — dashboard, keyword search, in-browser backup
 - Entirely offline, no cloud, no privacy concerns
 - Supports Chrome / Firefox / Safari on macOS / Linux / Windows
 - Single binary built in Rust 🦀
@@ -30,7 +30,7 @@ onehistory serve
 That's it. From this point on, **everything can be done in the browser**:
 
 - **Dashboard** (`/`) — KPI cards, daily page view chart, top pages and domains
-- **Search** (`/search`) — full-text search across all history with instant filtering
+- **Search** (`/search`) — keyword search across all history with instant filtering
 - **Database** (`/db`) — trigger new backups, monitor progress, view import history
 
 ## CLI Reference
