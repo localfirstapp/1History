@@ -9,6 +9,14 @@ themeBtn.addEventListener('click', () => {
   themeBtn.textContent = next === 'dark' ? '☀️' : '🌙'
 })
 
+function esc(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
 function fmtBytes(bytes) {
   if (bytes < 1024) return bytes + ' B'
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
@@ -29,7 +37,7 @@ async function loadStatus() {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
         <div>
           <span style="font-size:12px;color:var(--text-muted)">File</span>
-          <div style="font-size:13px;font-family:monospace;margin-top:2px;word-break:break-all">${s.file_path}</div>
+          <div style="font-size:13px;font-family:monospace;margin-top:2px;word-break:break-all">${esc(s.file_path)}</div>
         </div>
         <div>
           <span style="font-size:12px;color:var(--text-muted)">Size</span>
@@ -53,7 +61,7 @@ async function loadStatus() {
               ? '<tr><td colspan="2" style="color:var(--text-muted);text-align:center">No backups yet</td></tr>'
               : s.import_records.map(r => `
                 <tr>
-                  <td style="font-family:monospace;font-size:12px">${r.data_path}</td>
+                  <td style="font-family:monospace;font-size:12px">${esc(r.data_path)}</td>
                   <td style="font-size:12px;color:var(--text-muted)">${fmtDate(r.last_import * 1000)}</td>
                 </tr>`).join('')}
           </tbody>
@@ -61,7 +69,7 @@ async function loadStatus() {
       </div>`
   } catch (e) {
     document.getElementById('status-content').innerHTML =
-      `<p style="color:red">Failed to load: ${e.message}</p>`
+      `<p style="color:red">Failed to load: ${esc(e.message)}</p>`
   }
 }
 
@@ -115,7 +123,7 @@ document.getElementById('start-backup').addEventListener('click', async () => {
         const summaryEl = document.getElementById('backup-summary')
         summaryEl.style.display = 'block'
         summaryEl.innerHTML = s.error
-          ? `<span style="color:red">Error: ${s.error}</span>`
+          ? `<span style="color:red">Error: ${esc(s.error)}</span>`
           : `Found: <strong>${s.found}</strong> &nbsp; Imported: <strong>${s.imported}</strong> &nbsp; Duplicates: <strong>${s.duplicated}</strong>`
       }
       if (data.status === 'done') loadStatus()
