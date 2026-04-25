@@ -13,10 +13,15 @@ echarts.use([
   CanvasRenderer,
 ])
 
+function getAccentColor() {
+  return getComputedStyle(document.documentElement)
+    .getPropertyValue('--accent').trim() || '#4A90D9'
+}
+
 export function initDailyChart(el, data, onClickDate) {
   const chart = echarts.init(el)
   chart.setOption({
-    color: ['var(--accent)'],
+    color: [getAccentColor()],
     title: { text: 'Daily PV', subtext: 'Click any point to view details' },
     tooltip: {
       trigger: 'axis',
@@ -25,14 +30,14 @@ export function initDailyChart(el, data, onClickDate) {
         return `${d.toLocaleDateString()}<br/>PV: ${params[0].value[1]}`
       },
     },
-    toolbox: { feature: { saveAsImage: { show: true }, dataView: { show: true, readOnly: false } } },
+    toolbox: { feature: { saveAsImage: { show: true }, dataView: { show: true, readOnly: true } } },
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     xAxis: { type: 'time' },
     yAxis: { name: 'PV', type: 'value' },
     series: [{
       name: 'Page View',
       type: 'line',
-      showAllSymbol: true,
+      showAllSymbol: 'auto',
       data: data.map(([ts, cnt]) => [new Date(ts), cnt]),
     }],
   })
@@ -41,30 +46,34 @@ export function initDailyChart(el, data, onClickDate) {
     const ymd = d.toISOString().slice(0, 10)
     onClickDate(ymd)
   })
+  const onResize = () => chart.resize()
+  window.addEventListener('resize', onResize)
   return chart
 }
 
 export function initPieChart(el, data, title, onClickItem) {
   const chart = echarts.init(el)
   const top10 = data.slice(0, 10).map(([name, value]) => ({
-    name: name.length > 50 ? name.slice(0, 50) : name,
+    name: name.length > 50 ? name.slice(0, 50) + '…' : name,
     value,
   }))
   chart.setOption({
     title: { text: title, left: 'center' },
     tooltip: { trigger: 'item', formatter: '{a}<br/>{b}: {c} ({d}%)' },
-    legend: { orient: 'vertical', left: 'left', data: top10.map(d => d.name) },
+    legend: { orient: 'vertical', left: 10, data: top10.map(d => d.name) },
     toolbox: { feature: { saveAsImage: { show: true } } },
     series: [{
       name: title,
       type: 'pie',
       radius: '65%',
-      center: ['50%', '60%'],
+      center: ['55%', '60%'],
       data: top10,
     }],
   })
   if (onClickItem) {
     chart.on('click', (params) => onClickItem(params.name))
   }
+  const onResize = () => chart.resize()
+  window.addEventListener('resize', onResize)
   return chart
 }
