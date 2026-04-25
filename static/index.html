@@ -19,7 +19,8 @@
         startYmd: "{{ start_ymd }}",
         endYmd: "{{ end_ymd }}",
         stats: {{ stats }},
-        caseSensitive: {{ case_sensitive }}
+        caseSensitive: {{ case_sensitive }},
+        version: "{{ version }}"
       };
     </script>
   </head>
@@ -95,6 +96,12 @@
         </div>
       </div>
     </div>
+
+    <footer class="footer">
+      <a href="https://github.com/localfirstapp/1History" target="_blank" rel="noopener">1History</a>
+      &nbsp;·&nbsp; v<span id="footer-version"></span>
+      &nbsp;·&nbsp; Made with ♥ by <a href="https://en.liujiacai.net" target="_blank" rel="noopener">Jiacai Liu</a>
+    </footer>
 
     <script type="module" src="/static/dist/js/main.js"></script>
   </body>

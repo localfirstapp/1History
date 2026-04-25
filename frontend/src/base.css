@@ -81,3 +81,12 @@ td { padding: 8px 12px; font-size: 13px; border-bottom: 1px solid var(--border);
 tr:last-child td { border-bottom: none; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+.footer {
+  margin-top: 48px;
+  padding: 20px 24px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+}

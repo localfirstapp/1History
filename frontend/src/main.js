@@ -25,6 +25,7 @@ startInput.min = endInput.min = new Date(d.minTime).toISOString().slice(0, 10)
 startInput.max = endInput.max = new Date(d.maxTime).toISOString().slice(0, 10)
 
 document.getElementById('keyword').value = d.keyword
+document.getElementById('footer-version').textContent = d.version
 const caseSensitiveCheckbox = document.getElementById('case-sensitive')
 caseSensitiveCheckbox.checked = d.caseSensitive || false
 
