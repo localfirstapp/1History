@@ -30,6 +30,35 @@
 
 ![Database](screenshots/database.png)
 
+## Installation
+
+### Script (Linux / macOS)
+
+Downloads a prebuilt binary from [GitHub Releases](https://github.com/localfirstapp/1History/releases) and installs it to `~/.local/bin`.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/localfirstapp/1History/main/install.sh | sh
+```
+
+To pass options, use `sh -s --` after the pipe:
+
+```bash
+# Install a specific version
+curl -fsSL .../install.sh | sh -s -- --version v0.4.0
+
+# Install to a custom directory
+curl -fsSL .../install.sh | sh -s -- --prefix /usr/local/bin
+
+# Use a mirror for users in China
+curl -fsSL .../install.sh | sh -s -- --china
+```
+
+### Cargo
+
+```bash
+cargo install onehistory
+```
+
 ## Quick Start
 
 ```bash
@@ -91,45 +120,6 @@ Auto-detection covers all major browsers. Use `-f` for non-standard locations:
 ```bash
 # Import from custom paths; -d skips auto-detect (useful when browsers are open)
 onehistory backup -d -f ~/some-dir/History -f ~/another-dir/places.sqlite
-```
-
-## Installation
-
-### Script (Linux / macOS)
-
-Downloads a prebuilt binary from GitHub Releases and installs it to `~/.local/bin`.
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/localfirstapp/1History/main/install.sh | sh
-```
-
-To pass options, use `sh -s --` after the pipe:
-
-```bash
-# Install a specific version
-curl -fsSL .../install.sh | sh -s -- --version v0.4.0
-
-# Install to a custom directory
-curl -fsSL .../install.sh | sh -s -- --prefix /usr/local/bin
-
-# Use a mirror for users in China
-curl -fsSL .../install.sh | sh -s -- --china
-```
-
-### Homebrew
-
-```bash
-brew install 1History/onehistory/onehistory
-```
-
-### Binary
-
-Download a precompiled binary from the [release page](https://github.com/localfirstapp/1History/releases) (Linux, macOS, Windows).
-
-### Cargo
-
-```bash
-cargo install onehistory
 ```
 
 ## Development
