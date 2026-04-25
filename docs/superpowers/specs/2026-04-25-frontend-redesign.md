@@ -78,6 +78,29 @@ Replace the current Bootstrap 2 + jQuery 1.11 + old ECharts (require.js) stack w
 
 Layout and logic unchanged. CSS updated to match new theme.
 
+### Database Management (`/db`)
+
+A new page accessible from the navbar ("DB" link).
+
+**Status section** — loaded on page open:
+- DB file path and file size
+- Total records count, earliest and latest visit time
+- Per-browser breakdown: record count for Chrome / Firefox / Safari (joined from `onehistory_urls` domain patterns or stored source info)
+- Import records table: each backed-up history file path, last backup time, record count
+
+**Backup section:**
+
+*Configuration form:*
+- Extra history files input: a list of file paths, one per line (maps to `-f`, can be added/removed dynamically)
+- "Disable auto-detect" checkbox (maps to `-d`)
+- "Dry run" checkbox (maps to `-D`)
+
+*Execution:*
+- "Start Backup" button — POSTs to `/api/backup` with the form params, returns a `job_id`
+- Progress area: polls `GET /api/backup/{job_id}` every 1s until status is `done` or `error`
+- Progress display: spinner + live log lines (found count, imported count, duplicates, current file being processed)
+- On completion: shows summary (total imported, total duplicates, duration) and refreshes the status section
+
 ## Theme System
 
 CSS custom properties on `<html data-theme="light|dark">`:
@@ -125,7 +148,23 @@ SQL: four separate counts in one query using conditional aggregation.
 
 1. `index` handler: call `select_stats`, pass `stats` to template context
 2. Change `#[folder = "static"]` to `#[folder = "frontend/dist"]` on the `Asset` struct
-3. No new routes needed
+3. New routes for DB management page and backup API (see below)
+
+### New routes
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/db` | Serve DB management page HTML |
+| GET | `/api/db/status` | Return JSON: file path, size, total records, min/max time, per-browser counts, import records |
+| POST | `/api/backup` | Accept JSON body `{files, disable_detect, dry_run}`, spawn async backup task, return `{job_id}` |
+| GET | `/api/backup/{job_id}` | Return JSON: `{status, log_lines, summary}` — status is `running`, `done`, or `error` |
+
+Backup jobs are stored in a `Arc<Mutex<HashMap<JobId, BackupJob>>>` in the server state. Each job runs in a `tokio::task::spawn_blocking` thread and appends log lines to a `Vec<String>` protected by a `Mutex`. The poll endpoint reads the current snapshot.
+
+### `src/database.rs`
+
+- Add `select_stats(start: i64, end: i64) -> Result<Stats>` (for index KPI cards)
+- Add `select_db_status() -> Result<DbStatus>` returning file path, size, total records, min/max time, per-browser visit counts, and all import records
 
 ## Dependencies
 
@@ -167,11 +206,12 @@ Vite config proxies `/details`, `/search`, `/` API calls to `localhost:9960` dur
 2. Port `index.html` → new layout with KPI cards
 3. Port `search.html` → virtual scroll
 4. Port `details.html` → updated styles only
-5. Add `select_stats` to `database.rs`
-6. Update `web.rs`: add stats to index context, change embed folder
-7. Delete `static/` directory
-8. Add `frontend/dist/` and `frontend/node_modules/` to `.gitignore`
-9. Update CI: add `npm run build` step before `cargo build`
+5. Add `select_stats` and `select_db_status` to `database.rs`
+6. Update `web.rs`: add stats to index context, change embed folder, add backup job state, add new routes
+7. Build `db.html` page with status section and backup form + polling
+8. Delete `static/` directory
+9. Add `frontend/dist/` and `frontend/node_modules/` to `.gitignore`
+10. Update CI: add `npm run build` step before `cargo build`
 
 ## What Is Not Changing
 
