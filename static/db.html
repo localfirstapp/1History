@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/static/img/history.ico">
+  <title>1History — Database</title>
+  <link rel="stylesheet" href="/static/dist/assets/theme.css">
+</head>
+<body>
+  <nav>
+    <div style="display:flex;align-items:center;gap:16px">
+      <a class="nav-brand" href="/">1History</a>
+      <span style="color:var(--text-muted);font-size:13px">Database Management</span>
+    </div>
+    <button id="theme-toggle" class="btn-outline" title="Toggle theme">🌙</button>
+  </nav>
+
+  <div style="padding:24px;max-width:1000px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h2 style="font-size:16px;font-weight:700">Database Status</h2>
+        <button class="btn-outline" id="refresh-status" style="font-size:12px">Refresh</button>
+      </div>
+      <div id="status-content"><p style="color:var(--text-muted)">Loading...</p></div>
+    </div>
+
+    <div class="card">
+      <h2 style="font-size:16px;font-weight:700;margin-bottom:16px">Backup</h2>
+
+      <div style="margin-bottom:12px">
+        <label style="font-size:13px;font-weight:500;display:block;margin-bottom:6px">
+          Extra history files (one path per line)
+        </label>
+        <textarea id="extra-files" rows="3"
+          style="width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;resize:vertical;font-family:monospace;box-sizing:border-box"
+          placeholder="/path/to/History&#10;/path/to/places.sqlite"></textarea>
+      </div>
+
+      <div style="display:flex;gap:20px;margin-bottom:16px">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="disable-detect"> Disable auto-detect
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="dry-run"> Dry run
+        </label>
+      </div>
+
+      <button class="btn" id="start-backup">Start Backup</button>
+
+      <div id="backup-progress" style="display:none;margin-top:16px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <span id="backup-status-badge"
+            style="font-size:12px;padding:2px 8px;border-radius:20px;background:var(--accent);color:#fff">running</span>
+          <span style="font-size:13px;color:var(--text-muted)" id="backup-status-text">Backup in progress...</span>
+        </div>
+        <div id="backup-log"
+          style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px;max-height:200px;overflow-y:auto;font-family:monospace;font-size:12px"></div>
+        <div id="backup-summary"
+          style="display:none;margin-top:12px;padding:12px;background:var(--bg-card);border-radius:6px;border:1px solid var(--border)"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <a href="https://github.com/localfirstapp/1History" target="_blank" rel="noopener">1History</a>
+    &nbsp;·&nbsp; Made with ♥ by <a href="https://en.liujiacai.net" target="_blank" rel="noopener">Jiacai Liu</a>
+  </footer>
+
+  <script type="module" src="/static/dist/js/db.js"></script>
+</body>
+</html>

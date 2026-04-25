@@ -1,19 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/static/img/history.ico">
   <title>1History Search</title>
-  <link rel="stylesheet" href="/static/dist/assets/theme.css">
-  <script type="text/javascript">
-    window.__SERVER_DATA__ = {
-      visits: {{ visit_details }},
-      keyword: "{{ keyword | escape }}",
-      startYmd: "{{ start_ymd }}",
-      endYmd: "{{ end_ymd }}"
-    };
-  </script>
 </head>
 <body>
   <nav>
@@ -42,11 +33,14 @@
     </div>
   </div>
 
-  <footer class="footer">
-    <a href="https://github.com/localfirstapp/1History" target="_blank" rel="noopener">1History</a>
-    &nbsp;·&nbsp; Made with ♥ by <a href="https://en.liujiacai.net" target="_blank" rel="noopener">Jiacai Liu</a>
-  </footer>
-
-  <script type="module" src="/static/dist/js/search.js"></script>
+  <script id="server-data" type="application/json">
+  {
+    "visits": {{ visit_details }},
+    "keyword": "{{ keyword | escape }}",
+    "startYmd": "{{ start_ymd }}",
+    "endYmd": "{{ end_ymd }}"
+  }
+  </script>
+  <script type="module" src="../src/search.js"></script>
 </body>
 </html>

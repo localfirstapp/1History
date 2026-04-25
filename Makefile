@@ -2,6 +2,9 @@ release-arm64:
 	./release-arm64.sh
 
 serve:
+	cd frontend && npm run build && cd .. && cargo run -- serve
+
+serve-dev:
 	cargo run -- serve
 
 publish:
