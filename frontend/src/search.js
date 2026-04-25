@@ -54,7 +54,7 @@ const virtualizer = new Virtualizer({
 })
 
 function formatDatetime(ms) {
-  return new Date(ms * 1000).toLocaleString(undefined, {
+  return new Date(ms).toLocaleString(undefined, {
     year: 'numeric', month: '2-digit', day: '2-digit',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   })
