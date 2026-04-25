@@ -220,14 +220,14 @@ ON CONFLICT (data_path)
     // When a keyword is present the fragment uses the ?3 positional placeholder
     // (callers pass start=?1, end=?2, kw=?3); when absent the fragment is `1`
     // and callers omit the third parameter entirely.
-    // Search is always case-insensitive via lower().
+    // SQLite LIKE is case-insensitive for ASCII by default.
     fn keyword_to_like(kw: Option<String>) -> (String, Option<String>) {
         match kw {
             None => ("1".to_string(), None),
             Some(v) => {
                 let bound = format!("%{}%", v);
                 let fragment =
-                    "(lower(url) like lower(?3) or lower(title) like lower(?3))".to_string();
+                    "(url like ?3 or title like ?3)".to_string();
                 (fragment, Some(bound))
             }
         }
