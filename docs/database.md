@@ -83,7 +83,7 @@ Each browser uses a different native timestamp format, which is normalized to PR
 | Chrome / Chromium | WebKit (µs) | 1601-01-01 | subtract 11644473600 × 10⁶ |
 | Safari | NSDate (seconds, float) | 2001-01-01 | add 978307200, multiply × 10⁶ |
 
-When querying, the Rust layer converts Unix milliseconds (used internally by the app) to PRTime via `ts * 1000`, and converts stored `visit_time` back to Unix milliseconds with `visit_time / 1000`.
+When querying, the Rust layer converts Unix milliseconds (used internally by the app) to PRTime via `ts * 1000`, and converts all stored timestamps back to Unix milliseconds (e.g. `visit_time / 1000`) before returning from the API.
 
 ## Deduplication
 
