@@ -31,9 +31,10 @@ document.getElementById('keyword').value = d.keyword
 function doSearch() {
   const kw = document.getElementById('keyword').value
   const dates = fp.selectedDates
-  if (dates.length < 2) return
   const fmt = (dt) => dt.toISOString().slice(0, 10)
-  window.location = `/?start=${fmt(dates[0])}&end=${fmt(dates[1])}&keyword=${encodeURIComponent(kw)}`
+  const start = dates.length >= 1 ? fmt(dates[0]) : d.startYmd
+  const end   = dates.length >= 2 ? fmt(dates[1]) : d.endYmd
+  window.location = `/?start=${start}&end=${end}&keyword=${encodeURIComponent(kw)}`
 }
 
 document.getElementById('submit').addEventListener('click', doSearch)
