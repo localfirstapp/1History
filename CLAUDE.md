@@ -10,7 +10,7 @@ npm install          # install dependencies (first time)
 npm run build        # build to static/dist/ (required before cargo build)
 npm run dev          # dev server on :5173 with proxy to :9960
 
-# Rust (requires frontend/static/dist/ to exist)
+# Rust (requires static/dist/ to exist)
 cargo build                                  # build
 cargo test                                   # run all tests
 cargo test <test_name>                       # run single test
