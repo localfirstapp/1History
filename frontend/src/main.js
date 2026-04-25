@@ -24,6 +24,11 @@ const fp = flatpickr('#date-range', {
   defaultDate: [d.startYmd, d.endYmd],
   minDate: new Date(d.minTime),
   maxDate: new Date(d.maxTime),
+  onReady(dates, _, self) {
+    self.input.value = dates.length === 2
+      ? `${self.formatDate(dates[0], 'Y-m-d')} to ${self.formatDate(dates[1], 'Y-m-d')}`
+      : ''
+  },
 })
 
 document.getElementById('keyword').value = d.keyword
