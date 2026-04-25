@@ -216,18 +216,22 @@ ON CONFLICT (data_path)
         ts * 1_000
     }
 
-    fn keyword_to_like(kw: Option<String>, case_sensitive: bool) -> String {
-        kw.map_or_else(
-            || "1".to_string(),
-            |v| {
-                let v = v.replace('\'', "");
-                if case_sensitive {
-                    format!("(url like '%{v}%' or title like '%{v}%')")
+    // Returns (sql_fragment, bound_value).
+    // When a keyword is present the fragment uses the :kw placeholder;
+    // callers must bind it to the returned value.
+    fn keyword_to_like(kw: Option<String>, case_sensitive: bool) -> (String, Option<String>) {
+        match kw {
+            None => ("1".to_string(), None),
+            Some(v) => {
+                let bound = format!("%{}%", v);
+                let fragment = if case_sensitive {
+                    "(url like :kw or title like :kw)".to_string()
                 } else {
-                    format!("(lower(url) like lower('%{v}%') or lower(title) like lower('%{v}%'))")
-                }
-            },
-        )
+                    "(lower(url) like lower(:kw) or lower(title) like lower(:kw))".to_string()
+                };
+                (fragment, Some(bound))
+            }
+        }
     }
 
     pub fn select_visits(
@@ -237,6 +241,7 @@ ON CONFLICT (data_path)
         keyword: Option<String>,
         case_sensitive: bool,
     ) -> Result<Vec<VisitDetail>> {
+        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword, case_sensitive);
         let sql = format!(
             r#"
 SELECT
@@ -248,11 +253,10 @@ FROM
     onehistory_urls u,
     onehistory_visits v ON u.id = v.item_id
 WHERE
-    visit_time BETWEEN :start AND :end and {}
+    visit_time BETWEEN :start AND :end and {kw_fragment}
 ORDER BY
     visit_time
-"#,
-            Self::keyword_to_like(keyword, case_sensitive)
+"#
         );
 
         let conn = self.conn.lock().unwrap();
@@ -262,7 +266,7 @@ ORDER BY
             named_params! {
                 ":start": Self::unixepoch_to_prtime(start),
                 ":end": Self::unixepoch_to_prtime(end),
-
+                ":kw": kw_value,
             },
             |row| {
                 let detail = VisitDetail {
@@ -290,6 +294,7 @@ ORDER BY
         keyword: Option<String>,
         case_sensitive: bool,
     ) -> Result<Vec<(i64, i64)>> {
+        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword, case_sensitive);
         let sql = format!(
             r#"
 SELECT
@@ -303,13 +308,12 @@ FROM (
         onehistory_urls u ON v.item_id = u.id
     WHERE
         visit_time BETWEEN :start AND :end
-        AND {})
+        AND {kw_fragment})
     GROUP BY
         visit_day
     ORDER BY
         visit_day;
-"#,
-            Self::keyword_to_like(keyword, case_sensitive)
+"#
         );
         debug!("Daily count sql: {sql}, start:{start}, end:{end}");
         let conn = self.conn.lock().unwrap();
@@ -319,6 +323,7 @@ FROM (
             named_params! {
                 ":start": Self::unixepoch_to_prtime(start),
                 ":end": Self::unixepoch_to_prtime(end),
+                ":kw": kw_value,
             },
             |row| Ok((row.get(0)?, row.get(1)?)),
         )?;
@@ -339,6 +344,7 @@ FROM (
         keyword: Option<String>,
         case_sensitive: bool,
     ) -> Result<Vec<(String, i64)>> {
+        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword, case_sensitive);
         let sql = format!(
             r#"
 SELECT
@@ -352,15 +358,14 @@ FROM (
         onehistory_urls u ON v.item_id = u.id
     WHERE
         visit_time BETWEEN :start AND :end
-        AND title != '' AND {})
+        AND title != '' AND {kw_fragment})
 GROUP BY
     url
 ORDER BY
     cnt DESC
-"#,
-            Self::keyword_to_like(keyword, case_sensitive)
+"#
         );
-        let url_top100 = self.select_top100(&sql, start, end)?;
+        let url_top100 = self.select_top100(&sql, start, end, kw_value)?;
 
         let mut domain_top = HashMap::new();
         for (url, cnt) in url_top100 {
@@ -381,6 +386,7 @@ ORDER BY
         keyword: Option<String>,
         case_sensitive: bool,
     ) -> Result<Vec<(String, i64)>> {
+        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword, case_sensitive);
         let sql = format!(
             r#"
 SELECT
@@ -394,19 +400,18 @@ FROM (
         onehistory_urls u ON v.item_id = u.id
     WHERE
         visit_time BETWEEN :start AND :end
-        AND title != '' AND {})
+        AND title != '' AND {kw_fragment})
 GROUP BY
     title
 ORDER BY
     cnt DESC
 LIMIT 100;
-"#,
-            Self::keyword_to_like(keyword, case_sensitive)
+"#
         );
-        self.select_top100(&sql, start, end)
+        self.select_top100(&sql, start, end, kw_value)
     }
 
-    fn select_top100(&self, sql: &str, start: i64, end: i64) -> Result<Vec<(String, i64)>> {
+    fn select_top100(&self, sql: &str, start: i64, end: i64, kw_value: Option<String>) -> Result<Vec<(String, i64)>> {
         let conn = self.conn.lock().unwrap();
         let mut stat = conn.prepare(sql)?;
 
@@ -414,6 +419,7 @@ LIMIT 100;
             named_params! {
                 ":start": Self::unixepoch_to_prtime(start),
                 ":end": Self::unixepoch_to_prtime(end),
+                ":kw": kw_value,
             },
             |row| Ok((row.get(0)?, row.get(1)?)),
         )?;
