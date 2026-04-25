@@ -220,16 +220,13 @@ ON CONFLICT (data_path)
     // When a keyword is present the fragment uses the ?3 positional placeholder
     // (callers pass start=?1, end=?2, kw=?3); when absent the fragment is `1`
     // and callers omit the third parameter entirely.
-    fn keyword_to_like(kw: Option<String>, case_sensitive: bool) -> (String, Option<String>) {
+    // Search is always case-insensitive via lower().
+    fn keyword_to_like(kw: Option<String>) -> (String, Option<String>) {
         match kw {
             None => ("1".to_string(), None),
             Some(v) => {
                 let bound = format!("%{}%", v);
-                let fragment = if case_sensitive {
-                    "(url like ?3 or title like ?3)".to_string()
-                } else {
-                    "(lower(url) like lower(?3) or lower(title) like lower(?3))".to_string()
-                };
+                let fragment = "(lower(url) like lower(?3) or lower(title) like lower(?3))".to_string();
                 (fragment, Some(bound))
             }
         }
@@ -241,9 +238,9 @@ ON CONFLICT (data_path)
         start: i64,
         end: i64,
         keyword: Option<String>,
-        case_sensitive: bool,
+        
     ) -> Result<Vec<VisitDetail>> {
-        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword, case_sensitive);
+        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword);
         let sql = format!(
             r#"
 SELECT
@@ -292,9 +289,9 @@ ORDER BY
         start: i64,
         end: i64,
         keyword: Option<String>,
-        case_sensitive: bool,
+        
     ) -> Result<Vec<(i64, i64)>> {
-        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword, case_sensitive);
+        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword);
         let sql = format!(
             r#"
 SELECT
@@ -341,9 +338,9 @@ FROM (
         start: i64,
         end: i64,
         keyword: Option<String>,
-        case_sensitive: bool,
+        
     ) -> Result<Vec<(String, i64)>> {
-        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword, case_sensitive);
+        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword);
         let sql = format!(
             r#"
 SELECT
@@ -383,9 +380,9 @@ ORDER BY
         start: i64,
         end: i64,
         keyword: Option<String>,
-        case_sensitive: bool,
+        
     ) -> Result<Vec<(String, i64)>> {
-        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword, case_sensitive);
+        let (kw_fragment, kw_value) = Self::keyword_to_like(keyword);
         let sql = format!(
             r#"
 SELECT

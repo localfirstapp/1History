@@ -21,7 +21,7 @@ pub fn export_csv(csv_file: String, db_file: String) -> Result<()> {
     let mut csv_writer = csv::Writer::from_writer(BufWriter::new(f));
 
     csv_writer.write_record(["time", "title", "url", "visit_type"])?;
-    let visits = db.select_visits(start, end, None, false)?;
+    let visits = db.select_visits(start, end, None)?;
     let len = visits.len();
     for visit in visits {
         csv_writer.write_record(vec![

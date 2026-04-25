@@ -106,7 +106,7 @@ impl Server {
         let end = start + 3_600_000 * 24;
         let keyword = query_params.keyword;
         let visit_details = db
-            .select_visits(start, end, keyword.clone(), false)
+            .select_visits(start, end, keyword.clone())
             .map_err(ServerError::from)?;
 
         let asset = Asset::get("details.html").unwrap();
@@ -149,10 +149,10 @@ impl Server {
             )
             .map_err(ClientError::from)?;
         let keyword = query_params.keyword;
-        let case_sensitive = query_params.case_sensitive.unwrap_or(false);
+        
 
         let daily_counts = db
-            .select_daily_count(start, end, keyword.clone(), case_sensitive)
+            .select_daily_count(start, end, keyword.clone())
             .context("daily_count")
             .map_err(ServerError::from)?;
         let (min_time, max_time) = match db.select_min_max_time() {
@@ -164,15 +164,15 @@ impl Server {
         };
 
         let title_top100 = db
-            .select_title_top100(start, end, keyword.clone(), case_sensitive)
+            .select_title_top100(start, end, keyword.clone())
             .context("title_top100")
             .map_err(ServerError::from)?;
         let domain_top100 = db
-            .select_domain_top100(start, end, keyword.clone(), case_sensitive)
+            .select_domain_top100(start, end, keyword.clone())
             .context("domain_top100")
             .map_err(ServerError::from)?;
         let visit_details = db
-            .select_visits(start, end, keyword.clone(), case_sensitive)
+            .select_visits(start, end, keyword.clone())
             .context("visit_details")
             .map_err(ServerError::from)?;
         let stats = db
@@ -203,7 +203,7 @@ impl Server {
                 start_ymd => crate::util::unixepoch_as_ymd(start),
                 end_ymd => crate::util::unixepoch_as_ymd(end),
                 keyword => keyword.unwrap_or_default(),
-                case_sensitive => case_sensitive,
+                
                 version => clap::crate_version!(),
             ))
             .map_err(|e| ServerError::from(Error::from(e)))?;
@@ -227,10 +227,10 @@ impl Server {
             )
             .map_err(ClientError::from)?;
         let keyword = query_params.keyword;
-        let case_sensitive = query_params.case_sensitive.unwrap_or(false);
+        
 
         let visit_details = db
-            .select_visits(start, end, keyword.clone(), case_sensitive)
+            .select_visits(start, end, keyword.clone())
             .context("visit_details")
             .map_err(ServerError::from)?;
 
