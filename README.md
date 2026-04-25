@@ -16,6 +16,20 @@
 - Supports Chrome / Firefox / Safari on macOS / Linux / Windows
 - Single binary built in Rust 🦀
 
+## Screenshots
+
+### Dashboard
+
+![PV Trends](screenshots/pv-trends.png)
+
+![Top 10 Pie](screenshots/top10-pie.png)
+
+![Top 100 Table](screenshots/top100-table.png)
+
+### Database
+
+![Database](screenshots/database.png)
+
 ## Quick Start
 
 ```bash
