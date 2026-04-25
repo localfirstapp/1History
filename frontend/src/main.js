@@ -25,12 +25,15 @@ startInput.min = endInput.min = new Date(d.minTime).toISOString().slice(0, 10)
 startInput.max = endInput.max = new Date(d.maxTime).toISOString().slice(0, 10)
 
 document.getElementById('keyword').value = d.keyword
+const caseSensitiveCheckbox = document.getElementById('case-sensitive')
+caseSensitiveCheckbox.checked = d.caseSensitive || false
 
 function doSearch() {
   const kw = document.getElementById('keyword').value
   const start = startInput.value || d.startYmd
   const end = endInput.value || d.endYmd
-  window.location = `/?start=${start}&end=${end}&keyword=${encodeURIComponent(kw)}`
+  const cs = caseSensitiveCheckbox.checked ? '&case_sensitive=true' : ''
+  window.location = `/?start=${start}&end=${end}&keyword=${encodeURIComponent(kw)}${cs}`
 }
 
 document.getElementById('submit').addEventListener('click', doSearch)

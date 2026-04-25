@@ -18,7 +18,8 @@
         keyword: "{{ keyword | escape }}",
         startYmd: "{{ start_ymd }}",
         endYmd: "{{ end_ymd }}",
-        stats: {{ stats }}
+        stats: {{ stats }},
+        caseSensitive: {{ case_sensitive }}
       };
     </script>
   </head>
@@ -30,6 +31,9 @@
         <span style="color:var(--text-muted);font-size:13px">—</span>
         <input id="date-end" type="date" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px">
         <input id="keyword" type="search" placeholder="Search..." style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;width:220px">
+        <label style="display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text-muted);white-space:nowrap;cursor:pointer">
+          <input type="checkbox" id="case-sensitive"> Aa
+        </label>
         <button class="btn" id="submit">Search</button>
         <a id="view-list" class="btn-outline" target="_blank" style="text-decoration:none">
           List <span id="view-list-count"></span>

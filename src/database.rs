@@ -216,12 +216,16 @@ ON CONFLICT (data_path)
         ts * 1_000
     }
 
-    fn keyword_to_like(kw: Option<String>) -> String {
+    fn keyword_to_like(kw: Option<String>, case_sensitive: bool) -> String {
         kw.map_or_else(
             || "1".to_string(),
             |v| {
                 let v = v.replace('\'', "");
-                format!("(lower(url) like lower('%{v}%') or lower(title) like lower('%{v}%'))")
+                if case_sensitive {
+                    format!("(url like '%{v}%' or title like '%{v}%')")
+                } else {
+                    format!("(lower(url) like lower('%{v}%') or lower(title) like lower('%{v}%'))")
+                }
             },
         )
     }
@@ -231,6 +235,7 @@ ON CONFLICT (data_path)
         start: i64,
         end: i64,
         keyword: Option<String>,
+        case_sensitive: bool,
     ) -> Result<Vec<VisitDetail>> {
         let sql = format!(
             r#"
@@ -247,7 +252,7 @@ WHERE
 ORDER BY
     visit_time
 "#,
-            Self::keyword_to_like(keyword)
+            Self::keyword_to_like(keyword, case_sensitive)
         );
 
         let conn = self.conn.lock().unwrap();
@@ -283,6 +288,7 @@ ORDER BY
         start: i64,
         end: i64,
         keyword: Option<String>,
+        case_sensitive: bool,
     ) -> Result<Vec<(i64, i64)>> {
         let sql = format!(
             r#"
@@ -303,7 +309,7 @@ FROM (
     ORDER BY
         visit_day;
 "#,
-            Self::keyword_to_like(keyword)
+            Self::keyword_to_like(keyword, case_sensitive)
         );
         debug!("Daily count sql: {sql}, start:{start}, end:{end}");
         let conn = self.conn.lock().unwrap();
@@ -331,6 +337,7 @@ FROM (
         start: i64,
         end: i64,
         keyword: Option<String>,
+        case_sensitive: bool,
     ) -> Result<Vec<(String, i64)>> {
         let sql = format!(
             r#"
@@ -351,7 +358,7 @@ GROUP BY
 ORDER BY
     cnt DESC
 "#,
-            Self::keyword_to_like(keyword)
+            Self::keyword_to_like(keyword, case_sensitive)
         );
         let url_top100 = self.select_top100(&sql, start, end)?;
 
@@ -372,6 +379,7 @@ ORDER BY
         start: i64,
         end: i64,
         keyword: Option<String>,
+        case_sensitive: bool,
     ) -> Result<Vec<(String, i64)>> {
         let sql = format!(
             r#"
@@ -393,7 +401,7 @@ ORDER BY
     cnt DESC
 LIMIT 100;
 "#,
-            Self::keyword_to_like(keyword)
+            Self::keyword_to_like(keyword, case_sensitive)
         );
         self.select_top100(&sql, start, end)
     }

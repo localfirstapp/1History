@@ -82,6 +82,7 @@ pub struct SearchQueryParams {
     pub start: Option<String>,
     pub end: Option<String>,
     pub keyword: Option<String>,
+    pub case_sensitive: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -89,6 +90,7 @@ pub struct IndexQueryParams {
     pub start: Option<String>, // Y-m-d
     pub end: Option<String>,   // Y-m-d
     pub keyword: Option<String>,
+    pub case_sensitive: Option<bool>,
 }
 
 #[derive(Debug)]
