@@ -23,6 +23,7 @@ struct Cli {
     #[clap(short, long, env("OH_DB_FILE"), default_value(&**DEFAULT_DB_FILE))]
     db_file: String,
 
+    /// Enable verbose logging
     #[clap(short, long)]
     verbose: bool,
 
@@ -38,6 +39,7 @@ enum Command {
     Serve(Serve),
     /// Show default history files on your computer
     Show,
+    /// Export history to CSV file
     Export(Export),
 }
 
@@ -49,6 +51,7 @@ struct Backup {
     /// Disable auto detect history files
     #[clap(short('d'), long)]
     disable_detect: bool,
+    /// Preview what would be imported without writing to the database
     #[clap(short('D'), long)]
     dry_run: bool,
 }
@@ -62,7 +65,7 @@ struct Serve {
 
 #[derive(Parser, Debug)]
 struct Export {
-    /// Output cse file
+    /// Output CSV file path
     #[clap(short, long, env("OH_EXPORT_CSV_FILE"), default_value(&**DEFAULT_CSV_FILE))]
     csv_file: String,
 }
