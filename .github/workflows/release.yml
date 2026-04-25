@@ -55,17 +55,9 @@ jobs:
         if: matrix.target == 'x86_64-unknown-linux-musl'
         run: sudo apt-get install -y musl-tools
 
-      - name: Install musl tools (aarch64)
+      - name: Install cross (aarch64)
         if: matrix.target == 'aarch64-unknown-linux-musl'
-        run: |
-          sudo apt-get install -y gcc-aarch64-linux-gnu
-          curl -sSL https://musl.cc/aarch64-linux-musl-cross.tgz | sudo tar -xz -C /usr/local
-          echo "/usr/local/aarch64-linux-musl-cross/bin" >> $GITHUB_PATH
-          mkdir -p ~/.cargo
-          cat >> ~/.cargo/config.toml <<'EOF'
-          [target.aarch64-unknown-linux-musl]
-          linker = "aarch64-linux-musl-gcc"
-          EOF
+        run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Cache
         uses: actions/cache@v5
@@ -90,7 +82,13 @@ jobs:
           npm run build
 
       - name: Build
-        run: cargo build --release --target ${{ matrix.target }}
+        run: |
+          if [ "${{ matrix.target }}" = "aarch64-unknown-linux-musl" ]; then
+            cross build --release --target ${{ matrix.target }}
+          else
+            cargo build --release --target ${{ matrix.target }}
+          fi
+        shell: bash
 
       - name: Set version
         shell: bash
