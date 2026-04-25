@@ -65,11 +65,11 @@ CREATE TABLE import_records (
 
 `visit_type` is stored as-is from the source browser and has different meanings per browser:
 
-| Browser | Source field | Meaning |
-|---------|-------------|---------|
-| Firefox | `moz_historyvisits.visit_type` | 1=link, 2=typed, 3=bookmark, 4=embed, 5=redirect (permanent), 6=redirect (temporary), 7=download, 8=framed link |
-| Chrome | `visits.transition & 0xFF` | 0=link, 1=typed, 2=auto bookmark, 3=auto subframe, 4=manual subframe, 7=form submit, 8=reload |
-| Safari | — | Always `-1` (Safari does not expose a visit type) |
+| Browser | Source field | Values | Reference |
+|---------|-------------|--------|-----------|
+| Firefox | `moz_historyvisits.visit_type` | 1=link, 2=typed, 3=bookmark, 4=embed, 5=redirect (permanent), 6=redirect (temporary), 7=download, 8=framed link | [nsINavHistoryService.idl](https://searchfox.org/mozilla-central/source/toolkit/components/places/nsINavHistoryService.idl) |
+| Chrome | `visits.transition & 0xFF` | 0=link, 1=typed, 2=auto bookmark, 3=auto subframe, 4=manual subframe, 7=form submit, 8=reload | [page_transition_types.h](https://source.chromium.org/chromium/chromium/src/+/main:ui/base/page_transition_types.h) |
+| Safari | — | Always `-1` (Safari does not expose a visit type) | — |
 
 ## Timestamp Format
 
