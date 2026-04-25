@@ -1,0 +1,70 @@
+import * as echarts from 'echarts/core'
+import { LineChart, PieChart } from 'echarts/charts'
+import {
+  TitleComponent, TooltipComponent, LegendComponent,
+  GridComponent, DataZoomComponent, ToolboxComponent,
+} from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+
+echarts.use([
+  LineChart, PieChart,
+  TitleComponent, TooltipComponent, LegendComponent,
+  GridComponent, DataZoomComponent, ToolboxComponent,
+  CanvasRenderer,
+])
+
+export function initDailyChart(el, data, onClickDate) {
+  const chart = echarts.init(el)
+  chart.setOption({
+    color: ['var(--accent)'],
+    title: { text: 'Daily PV', subtext: 'Click any point to view details' },
+    tooltip: {
+      trigger: 'axis',
+      formatter: (params) => {
+        const d = new Date(params[0].value[0])
+        return `${d.toLocaleDateString()}<br/>PV: ${params[0].value[1]}`
+      },
+    },
+    toolbox: { feature: { saveAsImage: { show: true }, dataView: { show: true, readOnly: false } } },
+    dataZoom: [{ type: 'inside' }, { type: 'slider' }],
+    xAxis: { type: 'time' },
+    yAxis: { name: 'PV', type: 'value' },
+    series: [{
+      name: 'Page View',
+      type: 'line',
+      showAllSymbol: true,
+      data: data.map(([ts, cnt]) => [new Date(ts), cnt]),
+    }],
+  })
+  chart.on('click', (params) => {
+    const d = new Date(params.value[0])
+    const ymd = d.toISOString().slice(0, 10)
+    onClickDate(ymd)
+  })
+  return chart
+}
+
+export function initPieChart(el, data, title, onClickItem) {
+  const chart = echarts.init(el)
+  const top10 = data.slice(0, 10).map(([name, value]) => ({
+    name: name.length > 50 ? name.slice(0, 50) : name,
+    value,
+  }))
+  chart.setOption({
+    title: { text: title, left: 'center' },
+    tooltip: { trigger: 'item', formatter: '{a}<br/>{b}: {c} ({d}%)' },
+    legend: { orient: 'vertical', left: 'left', data: top10.map(d => d.name) },
+    toolbox: { feature: { saveAsImage: { show: true } } },
+    series: [{
+      name: title,
+      type: 'pie',
+      radius: '65%',
+      center: ['50%', '60%'],
+      data: top10,
+    }],
+  })
+  if (onClickItem) {
+    chart.on('click', (params) => onClickItem(params.name))
+  }
+  return chart
+}
