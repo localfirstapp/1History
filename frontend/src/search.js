@@ -32,8 +32,7 @@ filterInput.addEventListener('input', () => {
     ? allVisits.filter(v => v.url.toLowerCase().includes(q) || (v.title || '').toLowerCase().includes(q))
     : allVisits
   updateCount()
-  virtualizer.setOptions({ ...virtualizer.options, count: filtered.length })
-  virtualizer.measure()
+  virtualizer.setOptions({ count: filtered.length })
   renderRows()
 })
 
@@ -76,6 +75,7 @@ function renderRows() {
   }).join('')
 }
 
+virtualizer._didMount()
 virtualizer._willUpdate()
 renderRows()
 
