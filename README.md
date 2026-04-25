@@ -44,13 +44,13 @@ To pass options, use `sh -s --` after the pipe:
 
 ```bash
 # Install a specific version
-curl -fsSL .../install.sh | sh -s -- --version v0.4.0
+curl -fsSL https://raw.githubusercontent.com/localfirstapp/1History/main/install.sh | sh -s -- --version v0.4.0
 
 # Install to a custom directory
-curl -fsSL .../install.sh | sh -s -- --prefix /usr/local/bin
+curl -fsSL https://raw.githubusercontent.com/localfirstapp/1History/main/install.sh | sh -s -- --prefix /usr/local/bin
 
 # Use a mirror for users in China
-curl -fsSL .../install.sh | sh -s -- --china
+curl -fsSL https://raw.githubusercontent.com/localfirstapp/1History/main/install.sh | sh -s -- --china
 ```
 
 ### Cargo
