@@ -44,20 +44,6 @@ async function loadStatus() {
           <div style="font-size:13px;margin-top:2px">${fmtDate(s.min_time)} → ${fmtDate(s.max_time)}</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
-        <div class="card" style="text-align:center;padding:10px">
-          <div style="font-size:18px;font-weight:700;color:var(--accent)">${s.chrome_visits.toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--text-muted)">Chrome / Chromium</div>
-        </div>
-        <div class="card" style="text-align:center;padding:10px">
-          <div style="font-size:18px;font-weight:700;color:var(--accent)">${s.firefox_visits.toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--text-muted)">Firefox</div>
-        </div>
-        <div class="card" style="text-align:center;padding:10px">
-          <div style="font-size:18px;font-weight:700;color:var(--accent)">${s.safari_visits.toLocaleString()}</div>
-          <div style="font-size:11px;color:var(--text-muted)">Safari</div>
-        </div>
-      </div>
       <h3 style="font-size:13px;font-weight:600;margin-bottom:8px">Import History</h3>
       <div style="overflow-x:auto">
         <table>

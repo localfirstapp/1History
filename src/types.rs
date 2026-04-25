@@ -39,9 +39,6 @@ pub struct DbStatus {
     pub total_visits: i64,
     pub min_time: i64,
     pub max_time: i64,
-    pub chrome_visits: i64,
-    pub firefox_visits: i64,
-    pub safari_visits: i64,
     pub import_records: Vec<ImportRecord>,
 }
 

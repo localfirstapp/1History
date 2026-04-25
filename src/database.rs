@@ -490,28 +490,6 @@ SELECT
             |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
         )?;
 
-        let chrome_visits: i64 = conn
-            .query_row(
-                "SELECT count(1) FROM onehistory_visits v JOIN onehistory_urls u ON v.item_id = u.id WHERE u.url NOT LIKE 'place%' AND u.url NOT LIKE 'about:%'",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap_or(0);
-        let firefox_visits: i64 = conn
-            .query_row(
-                "SELECT count(1) FROM onehistory_visits v JOIN onehistory_urls u ON v.item_id = u.id WHERE u.url LIKE 'place%'",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap_or(0);
-        let safari_visits: i64 = conn
-            .query_row(
-                "SELECT count(1) FROM onehistory_visits v JOIN onehistory_urls u ON v.item_id = u.id WHERE u.url LIKE 'about:%'",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap_or(0);
-
         let mut import_stat = conn.prepare(
             "SELECT data_path, CAST(last_import/1000 AS integer) FROM import_records ORDER BY last_import DESC",
         )?;
@@ -531,9 +509,6 @@ SELECT
             total_visits,
             min_time,
             max_time,
-            chrome_visits,
-            firefox_visits,
-            safari_visits,
             import_records,
         })
     }
