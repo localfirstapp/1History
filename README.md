@@ -83,6 +83,8 @@ onehistory backup -d -f ~/some-dir/History -f ~/another-dir/places.sqlite
 
 ### Script (Linux / macOS)
 
+Downloads a prebuilt binary from GitHub Releases and installs it to `~/.local/bin`.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/localfirstapp/1History/main/install.sh | sh
 ```
