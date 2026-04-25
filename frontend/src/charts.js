@@ -66,16 +66,15 @@ export function initPieChart(el, data, title, onClickItem) {
     },
     legend: {
       orient: 'vertical',
-      right: 10,
+      left: '48%',
       top: 'middle',
-      width: 220,
       formatter: (name) => name.length > 60 ? name.slice(0, 60) + '…' : name,
     },
     series: [{
       name: title,
       type: 'pie',
       radius: ['30%', '65%'],
-      center: ['35%', '55%'],
+      center: ['24%', '55%'],
       data: top10,
       label: { show: false },
       labelLine: { show: false },
