@@ -22,12 +22,7 @@ export function initDailyChart(el, data, onClickDate) {
   const chart = echarts.init(el)
   chart.setOption({
     color: [getAccentColor()],
-    title: {
-      text: 'Daily Page Views',
-      subtext: 'Click any point to view details',
-      textStyle: { fontSize: 14, fontWeight: 500 },
-      subtextStyle: { fontSize: 11 },
-    },
+    title: { text: 'Daily Page Views', textStyle: { fontSize: 14, fontWeight: 500 } },
     tooltip: {
       trigger: 'axis',
       formatter: (params) => {
@@ -38,7 +33,7 @@ export function initDailyChart(el, data, onClickDate) {
     toolbox: { feature: { saveAsImage: { show: true }, dataView: { show: true, readOnly: true } } },
     dataZoom: [{ type: 'inside' }, { type: 'slider' }],
     xAxis: { type: 'time' },
-    yAxis: { name: 'PV', type: 'value' },
+    yAxis: { type: 'value' },
     series: [{
       name: 'Page View',
       type: 'line',

@@ -5,88 +5,102 @@
 
 > All your history in one file.
 
-1History is a command line tool to backup your different browser histories into one file, and visualize them with a modern web UI.
+1History backs up your browser history into a single local file and lets you explore it through a modern web UI — search, visualize, and manage everything from the browser, no extra CLI commands needed after the initial setup.
 
 [![ProductHunt](https://api.producthunt.com/widgets/embed-image/v1/review.svg?post_id=329191&theme=light)](https://www.producthunt.com/posts/1history?utm_source=badge-review&utm_medium=badge&utm_souce=badge-1history#discussion-body)
 
 ## Features
 
-- Modern dashboard with dark/light theme, KPI cards, and interactive charts
-- Search history across all browsers with case-insensitive filtering
-- Virtual-scroll search results — handles 10k+ records without lag
-- In-browser backup via the Database page (no CLI required after initial setup)
-- Export as CSV file
-- Entirely offline — no need to worry about privacy leaks
-- Support Chrome/Firefox/Safari on macOS/Linux/Windows (including Flatpak and Snap variants)
-- Well-designed schemas to avoid history duplication when backing up multiple times
+- Modern web UI — dashboard, keyword search, in-browser backup
+- Entirely offline, no cloud, no privacy concerns
+- Supports Chrome / Firefox / Safari on macOS / Linux / Windows
 - Single binary built in Rust 🦀
 
-## Usage
+## Quick Start
 
 ```bash
-onehistory 0.4.0
+# First backup — auto-detects all supported browsers
+onehistory backup
 
-USAGE:
-    onehistory [OPTIONS] <SUBCOMMAND>
-
-OPTIONS:
-    -d, --db-file  <DB_FILE>    Database path [env: OH_DB_FILE=] [default: ~/onehistory.db]
-    -h, --help                  Print help information
-    -v, --verbose
-    -V, --version               Print version information
-
-SUBCOMMANDS:
-    backup    Backup browser history to 1History
-    export    Export history to CSV
-    serve     Start HTTP server to visualize history
-    show      Show default history files on your computer
-```
-
-### Backup
-
-```bash
-USAGE:
-    onehistory backup [OPTIONS]
-
-OPTIONS:
-    -d, --disable-detect                    Disable auto detect history files
-    -D, --dry-run
-    -f, --history-files <HISTORY_FILES>     SQLite file path of different browsers
-    -h, --help                              Print help information
-```
-
-`backup` is the main subcommand. It will auto-detect browser history files and import them into 1History.
-
-You can also use `-f` to specify files manually. The history file naming convention:
-
-| Browser | History Filename |
-|---------|-----------------|
-| Chrome  | History         |
-| Firefox | places.sqlite   |
-| Safari  | History.db      |
-
-```bash
-# -f can be used multiple times
-# -d is useful when backing up while browsers are open
-onehistory backup -d -f ~/some-dir/History.db -f ~/another-dir/places.sqlite
-```
-
-### Serve
-
-After backing up, run `serve` to explore your history in the browser:
-
-```bash
+# Start the web UI
 onehistory serve
 # Open http://127.0.0.1:9960
 ```
 
-The web UI includes:
+That's it. From this point on, **everything can be done in the browser**:
 
-- **Dashboard** — KPI cards, daily page view chart, top domains/pages
-- **Search** — full-text search with virtual scroll and client-side instant filter
-- **Database** — database status, per-browser breakdown, and in-browser backup
+- **Dashboard** (`/`) — KPI cards, daily page view chart, top pages and domains
+- **Search** (`/search`) — keyword search across all history with instant filtering
+- **Database** (`/db`) — trigger new backups, monitor progress, view import history
+
+## CLI Reference
+
+The CLI is only needed for the initial setup and for scripting/automation use cases.
+
+```
+Usage: onehistory [OPTIONS] <COMMAND>
+
+Commands:
+  backup  Backup browser history to 1History
+  serve   Start HTTP server to visualize history
+  show    Show default history files on your computer
+  export  Export history to CSV file
+  help    Print this message or the help of the given subcommand(s)
+
+Options:
+  -d, --db-file <DB_FILE>  Database path [env: OH_DB_FILE=] [default: ~/onehistory.db]
+  -v, --verbose            Enable verbose logging
+  -h, --help               Print help
+  -V, --version            Print version
+```
+
+### backup
+
+```
+Usage: onehistory backup [OPTIONS]
+
+Options:
+  -f, --history-files <HISTORY_FILES>  SQLite file path of different browsers(History.db/places.sqlite...)
+  -d, --disable-detect                 Disable auto detect history files
+  -D, --dry-run                        Preview what would be imported without writing to the database
+  -h, --help                           Print help
+```
+
+Auto-detection covers all major browsers. Use `-f` for non-standard locations:
+
+| Browser | History file    |
+|---------|-----------------|
+| Chrome  | `History`       |
+| Firefox | `places.sqlite` |
+| Safari  | `History.db`    |
+
+```bash
+# Import from custom paths; -d skips auto-detect (useful when browsers are open)
+onehistory backup -d -f ~/some-dir/History -f ~/another-dir/places.sqlite
+```
 
 ## Installation
+
+### Script (Linux / macOS)
+
+Downloads a prebuilt binary from GitHub Releases and installs it to `~/.local/bin`.
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/localfirstapp/1History/main/install.sh | sh
+```
+
+To pass options, use `sh -s --` after the pipe:
+
+```bash
+# Install a specific version
+curl -fsSL .../install.sh | sh -s -- --version v0.4.0
+
+# Install to a custom directory
+curl -fsSL .../install.sh | sh -s -- --prefix /usr/local/bin
+
+# Use a mirror for users in China
+curl -fsSL .../install.sh | sh -s -- --china
+```
 
 ### Homebrew
 
@@ -96,7 +110,7 @@ brew install 1History/onehistory/onehistory
 
 ### Binary
 
-The [release page](https://github.com/localfirstapp/1History/releases) includes precompiled binaries for Linux, macOS and Windows.
+Download a precompiled binary from the [release page](https://github.com/localfirstapp/1History/releases) (Linux, macOS, Windows).
 
 ### Cargo
 
@@ -116,35 +130,34 @@ cargo install onehistory
 ```bash
 git clone https://github.com/localfirstapp/1History
 cd 1History
-
-# Install frontend dependencies
 cd frontend && npm install && cd ..
 ```
 
 ### Build
 
-The frontend must be built before `cargo build`, as the output is embedded into the binary:
+The frontend must be built before `cargo build` — its output is embedded into the binary:
 
 ```bash
-# Build frontend (outputs to static/dist/)
 cd frontend && npm run build && cd ..
-
-# Build binary
 cargo build
 ```
 
-### Running locally
+Or simply:
 
 ```bash
-# Terminal 1 — start Rust server
+make serve
+```
+
+### Running locally with hot reload
+
+```bash
+# Terminal 1 — Rust server
 cargo run -- serve
 
-# Terminal 2 — start Vite dev server with hot reload (proxies API to :9960)
+# Terminal 2 — Vite dev server (proxies API to :9960)
 cd frontend && npm run dev
 # Open http://localhost:5173
 ```
-
-Changes to files in `frontend/src/` are reflected immediately via Vite HMR. Changes to `static/*.html` (Minijinja templates) or Rust code require restarting the Rust server (and rebuilding if Rust code changed).
 
 ### Testing
 
@@ -162,7 +175,7 @@ See [CHANGELOG](CHANGELOG.md)
 
 **`Error code 5: The database file is locked`**
 
-This happens when your browser is open during backup, as SQLite only allows one connection at a time. Either close the browser first, or use `-d` with `-f` to point at a copy of the history file.
+This happens when your browser is open during backup. Either close the browser first, or use `-d -f` to point at a copy of the history file outside the browser's profile directory.
 
 ## LICENSE
 
