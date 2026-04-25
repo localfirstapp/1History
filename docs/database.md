@@ -40,7 +40,7 @@ CREATE TABLE onehistory_visits (
 |--------|-------------|
 | `item_id` | Foreign key → `onehistory_urls.id` |
 | `visit_time` | Visit timestamp in **microseconds** (PRTime / Firefox epoch — see below) |
-| `visit_type` | Browser-specific visit type code (e.g. typed, link, redirect) |
+| `visit_type` | Browser-specific visit type code, passed through as-is from the source browser (see below) |
 
 The `UNIQUE(item_id, visit_time)` constraint is what prevents duplicate visits when the same history file is backed up multiple times.
 
@@ -60,6 +60,16 @@ CREATE TABLE import_records (
 |--------|-------------|
 | `data_path` | Absolute path of the source history file (original path, never a temp file) |
 | `last_import` | Timestamp of the most recent backup from this file, in microseconds |
+
+## visit_type Values
+
+`visit_type` is stored as-is from the source browser and has different meanings per browser:
+
+| Browser | Source field | Meaning |
+|---------|-------------|---------|
+| Firefox | `moz_historyvisits.visit_type` | 1=link, 2=typed, 3=bookmark, 4=embed, 5=redirect (permanent), 6=redirect (temporary), 7=download, 8=framed link |
+| Chrome | `visits.transition & 0xFF` | 0=link, 1=typed, 2=auto bookmark, 3=auto subframe, 4=manual subframe, 7=form submit, 8=reload |
+| Safari | — | Always `-1` (Safari does not expose a visit type) |
 
 ## Timestamp Format
 
