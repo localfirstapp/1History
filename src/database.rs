@@ -226,8 +226,7 @@ ON CONFLICT (data_path)
             None => ("1".to_string(), None),
             Some(v) => {
                 let bound = format!("%{}%", v);
-                let fragment =
-                    "(url like ?3 or title like ?3)".to_string();
+                let fragment = "(url like ?3 or title like ?3)".to_string();
                 (fragment, Some(bound))
             }
         }
