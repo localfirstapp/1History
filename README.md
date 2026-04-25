@@ -11,12 +11,9 @@
 
 ## Features
 
-- Modern dashboard with dark/light theme, KPI cards, and interactive charts
-- Full-text search with virtual scroll — handles 10k+ records without lag
-- **Backup from the browser** — trigger backup, monitor progress, and view import history all from the Database page
-- Entirely offline — no cloud, no privacy concerns
-- Supports Chrome / Firefox / Safari on macOS / Linux / Windows (including Flatpak and Snap variants)
-- Deduplication — safe to backup multiple times
+- Modern web UI — dashboard, full-text search, in-browser backup
+- Entirely offline, no cloud, no privacy concerns
+- Supports Chrome / Firefox / Safari on macOS / Linux / Windows
 - Single binary built in Rust 🦀
 
 ## Quick Start
