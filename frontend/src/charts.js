@@ -59,15 +59,26 @@ export function initPieChart(el, data, title, onClickItem) {
   }))
   chart.setOption({
     title: { text: title, left: 'center' },
-    tooltip: { trigger: 'item', formatter: '{a}<br/>{b}: {c} ({d}%)' },
-    legend: { orient: 'vertical', left: 10, data: top10.map(d => d.name) },
-    toolbox: { feature: { saveAsImage: { show: true } } },
+    tooltip: {
+      trigger: 'item',
+      formatter: (params) => `${params.name}<br/>${params.value} (${params.percent}%)`,
+      confine: true,
+    },
+    legend: { show: false },
     series: [{
       name: title,
       type: 'pie',
-      radius: '65%',
-      center: ['55%', '60%'],
+      radius: ['30%', '70%'],
+      center: ['50%', '55%'],
       data: top10,
+      label: {
+        show: true,
+        formatter: (params) => params.percent >= 5 ? params.name : '',
+        overflow: 'truncate',
+        width: 80,
+      },
+      labelLine: { show: true, length: 8, length2: 6 },
+      emphasis: { itemStyle: { shadowBlur: 6, shadowOffsetX: 0, shadowColor: 'rgba(0,0,0,0.3)' } },
     }],
   })
   if (onClickItem) {
