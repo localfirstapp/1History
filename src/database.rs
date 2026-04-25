@@ -221,7 +221,7 @@ ON CONFLICT (data_path)
             || "1".to_string(),
             |v| {
                 let v = v.replace('\'', "");
-                format!("(url like '%{v}%' or title like '%{v}%')")
+                format!("(lower(url) like lower('%{v}%') or lower(title) like lower('%{v}%'))")
             },
         )
     }
