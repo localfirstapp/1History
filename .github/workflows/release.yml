@@ -52,7 +52,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install musl tools
-        if: matrix.target == 'x86_64-unknown-linux-musl'
+        if: matrix.os == 'ubuntu-latest'
         run: sudo apt-get install -y musl-tools
 
       - name: Cache
