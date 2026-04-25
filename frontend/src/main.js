@@ -50,11 +50,11 @@ initDailyChart(
   d.dailyCounts,
   (ymd) => window.open(`/details/${ymd}?keyword=${encodeURIComponent(d.keyword)}`, '_blank')
 )
-initPieChart(document.getElementById('title-pie'), d.titleTop100, 'TOP 10 by Title', null)
+initPieChart(document.getElementById('title-pie'), d.titleTop100, 'Top 10 Pages', null)
 initPieChart(
   document.getElementById('domain-pie'),
   d.domainTop100,
-  'TOP 10 by Domain',
+  'Top 10 Domains',
   (domain) => {
     document.getElementById('keyword').value = domain
     doSearch()

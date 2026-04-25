@@ -22,7 +22,12 @@ export function initDailyChart(el, data, onClickDate) {
   const chart = echarts.init(el)
   chart.setOption({
     color: [getAccentColor()],
-    title: { text: 'Daily PV', subtext: 'Click any point to view details' },
+    title: {
+      text: 'Daily Page Views',
+      subtext: 'Click any point to view details',
+      textStyle: { fontSize: 14, fontWeight: 500 },
+      subtextStyle: { fontSize: 11 },
+    },
     tooltip: {
       trigger: 'axis',
       formatter: (params) => {
@@ -58,7 +63,7 @@ export function initPieChart(el, data, title, onClickItem) {
     value,
   }))
   chart.setOption({
-    title: { text: title, left: 'center' },
+    title: { text: title, left: 'center', textStyle: { fontSize: 14, fontWeight: 500 } },
     tooltip: {
       trigger: 'item',
       formatter: (params) => `${params.name}<br/>${params.value} (${params.percent}%)`,
