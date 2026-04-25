@@ -139,7 +139,10 @@ impl Server {
     ) -> Result<impl Reply, Rejection> {
         let end = query_params
             .end
-            .map_or_else(|| Ok(tomorrow_midnight() - 1), |ymd| ymd_midnight(&ymd).map(|t| t + 86_400_000 - 1))
+            .map_or_else(
+                || Ok(tomorrow_midnight() - 1),
+                |ymd| ymd_midnight(&ymd).map(|t| t + 86_400_000 - 1),
+            )
             .map_err(ClientError::from)?;
         let start = query_params
             .start
@@ -149,7 +152,6 @@ impl Server {
             )
             .map_err(ClientError::from)?;
         let keyword = query_params.keyword;
-        
 
         let daily_counts = db
             .select_daily_count(start, end, keyword.clone())
@@ -203,7 +205,7 @@ impl Server {
                 start_ymd => crate::util::unixepoch_as_ymd(start),
                 end_ymd => crate::util::unixepoch_as_ymd(end),
                 keyword => keyword.unwrap_or_default(),
-                
+
                 version => clap::crate_version!(),
             ))
             .map_err(|e| ServerError::from(Error::from(e)))?;
@@ -217,7 +219,10 @@ impl Server {
     ) -> Result<impl Reply, Rejection> {
         let end = query_params
             .end
-            .map_or_else(|| Ok(tomorrow_midnight() - 1), |ymd| ymd_midnight(&ymd).map(|t| t + 86_400_000 - 1))
+            .map_or_else(
+                || Ok(tomorrow_midnight() - 1),
+                |ymd| ymd_midnight(&ymd).map(|t| t + 86_400_000 - 1),
+            )
             .map_err(ClientError::from)?;
         let start = query_params
             .start
@@ -227,7 +232,6 @@ impl Server {
             )
             .map_err(ClientError::from)?;
         let keyword = query_params.keyword;
-        
 
         let visit_details = db
             .select_visits(start, end, keyword.clone())
@@ -283,8 +287,10 @@ impl Server {
         {
             let mut store = jobs.lock().unwrap();
             store.retain(|_, j| {
-                j.finished_at.lock().unwrap()
-                    .map_or(true, |t| t.elapsed().as_secs() < JOB_TTL_SECS)
+                j.finished_at
+                    .lock()
+                    .unwrap()
+                    .is_none_or(|t| t.elapsed().as_secs() < JOB_TTL_SECS)
             });
             store.insert(job_id.clone(), job);
         }

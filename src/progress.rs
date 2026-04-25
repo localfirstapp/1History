@@ -50,7 +50,7 @@ impl ProgressCollector for LogCollector {
     fn inc(&self, delta: u64) {
         let mut d = self.done.lock().unwrap();
         *d += delta;
-        if *d % 500 == 0 || *d == self.total {
+        if (*d).is_multiple_of(500) || *d == self.total {
             self.lines
                 .lock()
                 .unwrap()

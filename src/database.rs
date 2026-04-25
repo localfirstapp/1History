@@ -226,19 +226,18 @@ ON CONFLICT (data_path)
             None => ("1".to_string(), None),
             Some(v) => {
                 let bound = format!("%{}%", v);
-                let fragment = "(lower(url) like lower(?3) or lower(title) like lower(?3))".to_string();
+                let fragment =
+                    "(lower(url) like lower(?3) or lower(title) like lower(?3))".to_string();
                 (fragment, Some(bound))
             }
         }
     }
-
 
     pub fn select_visits(
         &self,
         start: i64,
         end: i64,
         keyword: Option<String>,
-        
     ) -> Result<Vec<VisitDetail>> {
         let (kw_fragment, kw_value) = Self::keyword_to_like(keyword);
         let sql = format!(
@@ -272,8 +271,12 @@ ORDER BY
             })
         };
         let rows: Vec<rusqlite::Result<VisitDetail>> = match &kw_value {
-            None => stat.query_map(rusqlite::params![start_p, end_p], mapper)?.collect(),
-            Some(kw) => stat.query_map(rusqlite::params![start_p, end_p, kw], mapper)?.collect(),
+            None => stat
+                .query_map(rusqlite::params![start_p, end_p], mapper)?
+                .collect(),
+            Some(kw) => stat
+                .query_map(rusqlite::params![start_p, end_p, kw], mapper)?
+                .collect(),
         };
 
         let mut res: Vec<VisitDetail> = Vec::new();
@@ -289,7 +292,6 @@ ORDER BY
         start: i64,
         end: i64,
         keyword: Option<String>,
-        
     ) -> Result<Vec<(i64, i64)>> {
         let (kw_fragment, kw_value) = Self::keyword_to_like(keyword);
         let sql = format!(
@@ -320,8 +322,12 @@ FROM (
 
         let mapper = |row: &rusqlite::Row<'_>| Ok((row.get(0)?, row.get(1)?));
         let rows: Vec<rusqlite::Result<(String, i64)>> = match &kw_value {
-            None => stat.query_map(rusqlite::params![start_p, end_p], mapper)?.collect(),
-            Some(kw) => stat.query_map(rusqlite::params![start_p, end_p, kw], mapper)?.collect(),
+            None => stat
+                .query_map(rusqlite::params![start_p, end_p], mapper)?
+                .collect(),
+            Some(kw) => stat
+                .query_map(rusqlite::params![start_p, end_p, kw], mapper)?
+                .collect(),
         };
 
         let mut res = Vec::new();
@@ -338,7 +344,6 @@ FROM (
         start: i64,
         end: i64,
         keyword: Option<String>,
-        
     ) -> Result<Vec<(String, i64)>> {
         let (kw_fragment, kw_value) = Self::keyword_to_like(keyword);
         let sql = format!(
@@ -380,7 +385,6 @@ ORDER BY
         start: i64,
         end: i64,
         keyword: Option<String>,
-        
     ) -> Result<Vec<(String, i64)>> {
         let (kw_fragment, kw_value) = Self::keyword_to_like(keyword);
         let sql = format!(
@@ -407,7 +411,13 @@ LIMIT 100;
         self.select_top100(&sql, start, end, kw_value)
     }
 
-    fn select_top100(&self, sql: &str, start: i64, end: i64, kw_value: Option<String>) -> Result<Vec<(String, i64)>> {
+    fn select_top100(
+        &self,
+        sql: &str,
+        start: i64,
+        end: i64,
+        kw_value: Option<String>,
+    ) -> Result<Vec<(String, i64)>> {
         let start_p = Self::unixepoch_to_prtime(start);
         let end_p = Self::unixepoch_to_prtime(end);
         let conn = self.conn.lock().unwrap();
@@ -415,8 +425,12 @@ LIMIT 100;
 
         let mapper = |row: &rusqlite::Row<'_>| Ok((row.get(0)?, row.get(1)?));
         let rows: Vec<rusqlite::Result<(String, i64)>> = match &kw_value {
-            None => stat.query_map(rusqlite::params![start_p, end_p], mapper)?.collect(),
-            Some(kw) => stat.query_map(rusqlite::params![start_p, end_p, kw], mapper)?.collect(),
+            None => stat
+                .query_map(rusqlite::params![start_p, end_p], mapper)?
+                .collect(),
+            Some(kw) => stat
+                .query_map(rusqlite::params![start_p, end_p, kw], mapper)?
+                .collect(),
         };
         let mut res = Vec::new();
         for r in rows {

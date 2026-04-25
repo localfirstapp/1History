@@ -31,14 +31,19 @@ pub fn backup_to_log(
         let s = Source::open(history_file).context("open")?;
         let rows = s.select(start, end).context("select")?.collect::<Vec<_>>();
         found += rows.len();
-        log_lines
-            .lock()
-            .unwrap()
-            .push(format!("Processing {} ({} records)...", history_file, rows.len()));
-        let collector =
-            LogCollector::new(history_file.to_string(), rows.len() as u64, Arc::clone(&log_lines));
+        log_lines.lock().unwrap().push(format!(
+            "Processing {} ({} records)...",
+            history_file,
+            rows.len()
+        ));
+        let collector = LogCollector::new(
+            history_file.to_string(),
+            rows.len() as u64,
+            Arc::clone(&log_lines),
+        );
         if !dry_run {
-            let (affected, duplicated) = db.persist(s.path(), rows, collector).context("persist")?;
+            let (affected, duplicated) =
+                db.persist(s.path(), rows, collector).context("persist")?;
             total_affected += affected;
             total_duplicated += duplicated;
         }
