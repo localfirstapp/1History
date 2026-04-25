@@ -1,5 +1,4 @@
 import './style.css'
-import flatpickr from 'flatpickr'
 import { initTheme, toggleTheme } from './theme.js'
 import { initDailyChart, initPieChart } from './charts.js'
 
@@ -18,27 +17,19 @@ document.getElementById('kpi-domains').textContent = d.stats.unique_domains.toLo
 document.getElementById('kpi-days').textContent = d.stats.active_days.toLocaleString()
 document.getElementById('kpi-today').textContent = d.stats.today_visits.toLocaleString()
 
-const fp = flatpickr('#date-range', {
-  mode: 'range',
-  dateFormat: 'Y-m-d',
-  minDate: new Date(d.minTime),
-  maxDate: new Date(d.maxTime),
-})
-// Parse YYYY-MM-DD as local time (not UTC) to avoid timezone off-by-one
-function parseLocalDate(ymd) {
-  const [y, m, day] = ymd.split('-').map(Number)
-  return new Date(y, m - 1, day)
-}
-fp.setDate([parseLocalDate(d.startYmd), parseLocalDate(d.endYmd)], false)
+const startInput = document.getElementById('date-start')
+const endInput = document.getElementById('date-end')
+startInput.value = d.startYmd
+endInput.value = d.endYmd
+startInput.min = endInput.min = new Date(d.minTime).toISOString().slice(0, 10)
+startInput.max = endInput.max = new Date(d.maxTime).toISOString().slice(0, 10)
 
 document.getElementById('keyword').value = d.keyword
 
 function doSearch() {
   const kw = document.getElementById('keyword').value
-  const dates = fp.selectedDates
-  const fmt = (dt) => dt.toISOString().slice(0, 10)
-  const start = dates.length >= 1 ? fmt(dates[0]) : d.startYmd
-  const end   = dates.length >= 2 ? fmt(dates[1]) : d.endYmd
+  const start = startInput.value || d.startYmd
+  const end = endInput.value || d.endYmd
   window.location = `/?start=${start}&end=${end}&keyword=${encodeURIComponent(kw)}`
 }
 
@@ -48,8 +39,7 @@ document.getElementById('keyword').addEventListener('keypress', (e) => {
 })
 
 const listBtn = document.getElementById('view-list')
-const listParams = `start=${d.startYmd}&end=${d.endYmd}${d.keyword ? '&keyword=' + encodeURIComponent(d.keyword) : ''}`
-listBtn.href = `/search?${listParams}`
+listBtn.href = `/search?start=${d.startYmd}&end=${d.endYmd}${d.keyword ? '&keyword=' + encodeURIComponent(d.keyword) : ''}`
 document.getElementById('view-list-count').textContent = d.visitCount.toLocaleString()
 
 initDailyChart(

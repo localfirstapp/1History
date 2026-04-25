@@ -5,7 +5,6 @@
     <link rel="icon" href="/static/img/history.ico">
     <title>1History</title>
   <link rel="stylesheet" href="/static/dist/assets/theme.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <script type="text/javascript">
       window.__SERVER_DATA__ = {
         start: {{ start }},
@@ -27,7 +26,9 @@
     <nav>
       <a class="nav-brand" href="/">1History</a>
       <div style="display:flex;align-items:center;gap:10px">
-        <input id="date-range" class="card" style="width:240px;cursor:pointer;font-size:13px;padding:6px 10px" readonly placeholder="Date range">
+        <input id="date-start" type="date" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px">
+        <span style="color:var(--text-muted);font-size:13px">—</span>
+        <input id="date-end" type="date" style="padding:6px 8px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px">
         <input id="keyword" type="search" placeholder="Search..." style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;width:220px">
         <button class="btn" id="submit">Search</button>
         <a id="view-list" class="btn-outline" target="_blank" style="text-decoration:none">
