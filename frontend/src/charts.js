@@ -69,7 +69,7 @@ export function initPieChart(el, data, title, onClickItem) {
       right: 10,
       top: 'middle',
       width: 220,
-      formatter: (name) => name.length > 30 ? name.slice(0, 30) + '…' : name,
+      formatter: (name) => name.length > 60 ? name.slice(0, 60) + '…' : name,
     },
     series: [{
       name: title,
