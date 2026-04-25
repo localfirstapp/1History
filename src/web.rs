@@ -136,7 +136,7 @@ impl Server {
     ) -> Result<impl Reply, Rejection> {
         let end = query_params
             .end
-            .map_or_else(|| Ok(tomorrow_midnight() - 1), |ymd| ymd_midnight(&ymd))
+            .map_or_else(|| Ok(tomorrow_midnight() - 1), |ymd| ymd_midnight(&ymd).map(|t| t + 86_400_000 - 1))
             .map_err(ClientError::from)?;
         let start = query_params
             .start
@@ -214,7 +214,7 @@ impl Server {
     ) -> Result<impl Reply, Rejection> {
         let end = query_params
             .end
-            .map_or_else(|| Ok(tomorrow_midnight() - 1), |ymd| ymd_midnight(&ymd))
+            .map_or_else(|| Ok(tomorrow_midnight() - 1), |ymd| ymd_midnight(&ymd).map(|t| t + 86_400_000 - 1))
             .map_err(ClientError::from)?;
         let start = query_params
             .start
