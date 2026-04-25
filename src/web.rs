@@ -52,11 +52,14 @@ async fn serve_file(path: Tail) -> Result<impl Reply, Rejection> {
 
 type JobId = String;
 
+const JOB_TTL_SECS: u64 = 3600; // remove finished jobs after 1 hour
+
 #[derive(Clone)]
 struct BackupJob {
     log_lines: Arc<Mutex<Vec<String>>>,
     status: Arc<Mutex<String>>,
     summary: Arc<Mutex<Option<BackupSummary>>>,
+    finished_at: Arc<Mutex<Option<std::time::Instant>>>,
 }
 
 type JobStore = Arc<Mutex<HashMap<JobId, BackupJob>>>;
@@ -268,12 +271,23 @@ impl Server {
         let status = Arc::new(Mutex::new("running".to_string()));
         let summary_store: Arc<Mutex<Option<BackupSummary>>> = Arc::new(Mutex::new(None));
 
+        let finished_at: Arc<Mutex<Option<std::time::Instant>>> = Arc::new(Mutex::new(None));
         let job = BackupJob {
             log_lines: Arc::clone(&log_lines),
             status: Arc::clone(&status),
             summary: Arc::clone(&summary_store),
+            finished_at: Arc::clone(&finished_at),
         };
-        jobs.lock().unwrap().insert(job_id.clone(), job);
+
+        // evict finished jobs older than TTL before inserting a new one
+        {
+            let mut store = jobs.lock().unwrap();
+            store.retain(|_, j| {
+                j.finished_at.lock().unwrap()
+                    .map_or(true, |t| t.elapsed().as_secs() < JOB_TTL_SECS)
+            });
+            store.insert(job_id.clone(), job);
+        }
 
         tokio::task::spawn_blocking(move || {
             let mut files = if req.disable_detect {
@@ -302,6 +316,7 @@ impl Server {
                     *status.lock().unwrap() = "error".to_string();
                 }
             }
+            *finished_at.lock().unwrap() = Some(std::time::Instant::now());
         });
 
         Ok(warp::reply::json(&BackupJobResponse { job_id }))
