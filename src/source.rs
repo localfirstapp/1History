@@ -6,7 +6,6 @@ use log::debug;
 use rusqlite::{Connection, OpenFlags, Row, ToSql, named_params};
 
 pub struct Source {
-    path: String,
     name: SourceName,
     conn: Connection,
 }
@@ -16,11 +15,7 @@ impl Source {
         let flags = OpenFlags::SQLITE_OPEN_READ_WRITE;
         let conn = Connection::open_with_flags(path, flags).context(path.to_string())?;
         let name = Self::detect_name(&conn).context(format!("detect {path}"))?;
-        Ok(Source {
-            path: path.to_string(),
-            name,
-            conn,
-        })
+        Ok(Source { name, conn })
     }
 
     // For Safari, seconds since 00:00:00 UTC on 1 January 2001
@@ -72,10 +67,6 @@ impl Source {
 
     pub fn name(&self) -> SourceName {
         self.name
-    }
-
-    pub fn path(&self) -> &str {
-        &self.path
     }
 
     pub fn select(&self, start: i64, end: i64) -> Result<Box<dyn Iterator<Item = VisitDetail>>> {

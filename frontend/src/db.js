@@ -62,7 +62,7 @@ async function loadStatus() {
               : s.import_records.map(r => `
                 <tr>
                   <td style="font-family:monospace;font-size:12px">${esc(r.data_path)}</td>
-                  <td style="font-size:12px;color:var(--text-muted)">${fmtDate(r.last_import * 1000)}</td>
+                  <td style="font-size:12px;color:var(--text-muted)">${fmtDate(r.last_import)}</td>
                 </tr>`).join('')}
           </tbody>
         </table>

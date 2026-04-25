@@ -27,35 +27,37 @@ pub fn backup_to_log(
     let mut total_affected = 0;
     let mut total_duplicated = 0;
 
-    let mut persist = |history_file: &str| {
-        let s = Source::open(history_file).context("open")?;
+    // open_path: file to read from; record_path: path stored in import_records
+    let mut persist = |open_path: &str, record_path: &str| {
+        let s = Source::open(open_path).context("open")?;
         let rows = s.select(start, end).context("select")?.collect::<Vec<_>>();
         found += rows.len();
         log_lines.lock().unwrap().push(format!(
             "Processing {} ({} records)...",
-            history_file,
+            record_path,
             rows.len()
         ));
         let collector = LogCollector::new(
-            history_file.to_string(),
+            record_path.to_string(),
             rows.len() as u64,
             Arc::clone(&log_lines),
         );
         if !dry_run {
-            let (affected, duplicated) =
-                db.persist(s.path(), rows, collector).context("persist")?;
+            let (affected, duplicated) = db
+                .persist(record_path, rows, collector)
+                .context("persist")?;
             total_affected += affected;
             total_duplicated += duplicated;
         }
         log_lines
             .lock()
             .unwrap()
-            .push(format!("Done: {}", history_file));
+            .push(format!("Done: {}", record_path));
         Ok::<_, Error>(())
     };
 
     for his_file in &history_files {
-        if let Err(e) = persist(his_file) {
+        if let Err(e) = persist(his_file, his_file) {
             let msg = format!("{e:?}");
             if msg.contains("The database file is locked") {
                 let mut tmp = match tempfile::NamedTempFile::new() {
@@ -69,9 +71,10 @@ pub fn backup_to_log(
                 if tmp.write_all(&body).is_err() {
                     continue;
                 }
-                let path = tmp.into_temp_path();
-                let path = path.to_string_lossy().to_string();
-                let _ = persist(&path);
+                let tmp_path = tmp.into_temp_path();
+                let tmp_str = tmp_path.to_string_lossy().to_string();
+                // use his_file as record_path so import_records shows the real path
+                let _ = persist(&tmp_str, his_file);
             }
         }
     }
@@ -92,17 +95,18 @@ pub fn backup(history_files: Vec<String>, db_file: String, dry_run: bool) -> Res
     let mut found = 0;
     let mut total_affected = 0;
     let mut total_duplicated = 0;
-    let mut persist = |history_file: &str| {
-        let s = Source::open(history_file).context("open")?;
+    let mut persist = |open_path: &str, record_path: &str| {
+        let s = Source::open(open_path).context("open")?;
         let rows = s.select(start, end).context("select")?.collect::<Vec<_>>();
         debug!("{:?} select {} histories", s.name(), rows.len());
         found += rows.len();
 
-        info!("Begin backup {}...", &history_file);
+        info!("Begin backup {}...", record_path);
         let collector = TUICollector::new(rows.len() as u64);
         if !dry_run {
-            let (affected, duplicated) =
-                db.persist(s.path(), rows, collector).context("persist")?;
+            let (affected, duplicated) = db
+                .persist(record_path, rows, collector)
+                .context("persist")?;
             debug!(
                 "{:?} affected:{}, duplicated:{}",
                 s.name(),
@@ -112,12 +116,12 @@ pub fn backup(history_files: Vec<String>, db_file: String, dry_run: bool) -> Res
             total_affected += affected;
             total_duplicated += duplicated;
         };
-        info!("Finish backup {}", &history_file);
+        info!("Finish backup {}", record_path);
 
         Ok::<_, Error>(())
     };
     for his_file in &history_files {
-        if let Err(e) = persist(his_file) {
+        if let Err(e) = persist(his_file, his_file) {
             let msg = format!("{e:?}");
             if msg.contains("The database file is locked") {
                 debug!("Open database directly failed, copy to temp and backup again");
@@ -133,10 +137,10 @@ pub fn backup(history_files: Vec<String>, db_file: String, dry_run: bool) -> Res
                     debug!("Copy to backup file failed, msg:{e}");
                     continue;
                 }
-                let path = tmp.into_temp_path();
-                let path = path.to_string_lossy();
-                if let Err(e) = persist(&path) {
-                    debug!("{his_file} persist failed, backup:{path}, err: {e:?}");
+                let tmp_path = tmp.into_temp_path();
+                let tmp_str = tmp_path.to_string_lossy().to_string();
+                if let Err(e) = persist(&tmp_str, his_file) {
+                    debug!("{his_file} persist failed, backup:{tmp_str}, err: {e:?}");
                 }
             }
         }
