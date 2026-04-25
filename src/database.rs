@@ -217,22 +217,24 @@ ON CONFLICT (data_path)
     }
 
     // Returns (sql_fragment, bound_value).
-    // When a keyword is present the fragment uses the :kw placeholder;
-    // callers must bind it to the returned value.
+    // When a keyword is present the fragment uses the ?3 positional placeholder
+    // (callers pass start=?1, end=?2, kw=?3); when absent the fragment is `1`
+    // and callers omit the third parameter entirely.
     fn keyword_to_like(kw: Option<String>, case_sensitive: bool) -> (String, Option<String>) {
         match kw {
             None => ("1".to_string(), None),
             Some(v) => {
                 let bound = format!("%{}%", v);
                 let fragment = if case_sensitive {
-                    "(url like :kw or title like :kw)".to_string()
+                    "(url like ?3 or title like ?3)".to_string()
                 } else {
-                    "(lower(url) like lower(:kw) or lower(title) like lower(:kw))".to_string()
+                    "(lower(url) like lower(?3) or lower(title) like lower(?3))".to_string()
                 };
                 (fragment, Some(bound))
             }
         }
     }
+
 
     pub fn select_visits(
         &self,
@@ -253,31 +255,29 @@ FROM
     onehistory_urls u,
     onehistory_visits v ON u.id = v.item_id
 WHERE
-    visit_time BETWEEN :start AND :end and {kw_fragment}
+    visit_time BETWEEN ?1 AND ?2 and {kw_fragment}
 ORDER BY
     visit_time
 "#
         );
 
+        let start_p = Self::unixepoch_to_prtime(start);
+        let end_p = Self::unixepoch_to_prtime(end);
         let conn = self.conn.lock().unwrap();
         let mut stat = conn.prepare(&sql)?;
 
-        let rows = stat.query_map(
-            named_params! {
-                ":start": Self::unixepoch_to_prtime(start),
-                ":end": Self::unixepoch_to_prtime(end),
-                ":kw": kw_value,
-            },
-            |row| {
-                let detail = VisitDetail {
-                    url: row.get(0)?,
-                    title: row.get(1).unwrap_or_else(|_| "".to_string()),
-                    visit_time: row.get(2)?,
-                    visit_type: 0,
-                };
-                Ok(detail)
-            },
-        )?;
+        let mapper = |row: &rusqlite::Row<'_>| {
+            Ok(VisitDetail {
+                url: row.get(0)?,
+                title: row.get(1).unwrap_or_default(),
+                visit_time: row.get(2)?,
+                visit_type: 0,
+            })
+        };
+        let rows: Vec<rusqlite::Result<VisitDetail>> = match &kw_value {
+            None => stat.query_map(rusqlite::params![start_p, end_p], mapper)?.collect(),
+            Some(kw) => stat.query_map(rusqlite::params![start_p, end_p, kw], mapper)?.collect(),
+        };
 
         let mut res: Vec<VisitDetail> = Vec::new();
         for r in rows {
@@ -307,7 +307,7 @@ FROM (
         onehistory_visits v,
         onehistory_urls u ON v.item_id = u.id
     WHERE
-        visit_time BETWEEN :start AND :end
+        visit_time BETWEEN ?1 AND ?2
         AND {kw_fragment})
     GROUP BY
         visit_day
@@ -316,17 +316,16 @@ FROM (
 "#
         );
         debug!("Daily count sql: {sql}, start:{start}, end:{end}");
+        let start_p = Self::unixepoch_to_prtime(start);
+        let end_p = Self::unixepoch_to_prtime(end);
         let conn = self.conn.lock().unwrap();
         let mut stat = conn.prepare(&sql)?;
 
-        let rows = stat.query_map(
-            named_params! {
-                ":start": Self::unixepoch_to_prtime(start),
-                ":end": Self::unixepoch_to_prtime(end),
-                ":kw": kw_value,
-            },
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )?;
+        let mapper = |row: &rusqlite::Row<'_>| Ok((row.get(0)?, row.get(1)?));
+        let rows: Vec<rusqlite::Result<(String, i64)>> = match &kw_value {
+            None => stat.query_map(rusqlite::params![start_p, end_p], mapper)?.collect(),
+            Some(kw) => stat.query_map(rusqlite::params![start_p, end_p, kw], mapper)?.collect(),
+        };
 
         let mut res = Vec::new();
         for r in rows {
@@ -357,7 +356,7 @@ FROM (
         onehistory_visits v,
         onehistory_urls u ON v.item_id = u.id
     WHERE
-        visit_time BETWEEN :start AND :end
+        visit_time BETWEEN ?1 AND ?2
         AND title != '' AND {kw_fragment})
 GROUP BY
     url
@@ -399,7 +398,7 @@ FROM (
         onehistory_visits v,
         onehistory_urls u ON v.item_id = u.id
     WHERE
-        visit_time BETWEEN :start AND :end
+        visit_time BETWEEN ?1 AND ?2
         AND title != '' AND {kw_fragment})
 GROUP BY
     title
@@ -412,23 +411,20 @@ LIMIT 100;
     }
 
     fn select_top100(&self, sql: &str, start: i64, end: i64, kw_value: Option<String>) -> Result<Vec<(String, i64)>> {
+        let start_p = Self::unixepoch_to_prtime(start);
+        let end_p = Self::unixepoch_to_prtime(end);
         let conn = self.conn.lock().unwrap();
         let mut stat = conn.prepare(sql)?;
 
-        let rows = stat.query_map(
-            named_params! {
-                ":start": Self::unixepoch_to_prtime(start),
-                ":end": Self::unixepoch_to_prtime(end),
-                ":kw": kw_value,
-            },
-            |row| Ok((row.get(0)?, row.get(1)?)),
-        )?;
-
+        let mapper = |row: &rusqlite::Row<'_>| Ok((row.get(0)?, row.get(1)?));
+        let rows: Vec<rusqlite::Result<(String, i64)>> = match &kw_value {
+            None => stat.query_map(rusqlite::params![start_p, end_p], mapper)?.collect(),
+            Some(kw) => stat.query_map(rusqlite::params![start_p, end_p, kw], mapper)?.collect(),
+        };
         let mut res = Vec::new();
         for r in rows {
             res.push(r?);
         }
-
         Ok(res)
     }
 
