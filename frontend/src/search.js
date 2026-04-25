@@ -1,5 +1,5 @@
 import './style.css'
-import { Virtualizer } from '@tanstack/virtual-core'
+import { Virtualizer, observeElementRect, observeElementOffset, elementScroll } from '@tanstack/virtual-core'
 import { initTheme, toggleTheme } from './theme.js'
 
 const d = window.__SERVER_DATA__
@@ -47,6 +47,9 @@ const virtualizer = new Virtualizer({
   estimateSize: () => ROW_HEIGHT,
   overscan: 10,
   scrollMargin: 0,
+  observeElementRect,
+  observeElementOffset,
+  scrollToFn: elementScroll,
   onChange: () => renderRows(),
 })
 
