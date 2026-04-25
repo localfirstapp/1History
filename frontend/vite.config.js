@@ -4,16 +4,20 @@ import { resolve } from 'path'
 
 export default defineConfig({
   plugins: [tailwindcss()],
-  root: 'pages',
   build: {
-    outDir: '../dist',
+    outDir: '../static/dist',
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        index:   resolve(__dirname, 'pages/index.html'),
-        search:  resolve(__dirname, 'pages/search.html'),
-        details: resolve(__dirname, 'pages/details.html'),
-        db:      resolve(__dirname, 'pages/db.html'),
+        main:    resolve(__dirname, 'src/main.js'),
+        search:  resolve(__dirname, 'src/search.js'),
+        details: resolve(__dirname, 'src/details.js'),
+        db:      resolve(__dirname, 'src/db.js'),
+      },
+      output: {
+        entryFileNames: 'js/[name].js',
+        chunkFileNames: 'js/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
       },
     },
   },

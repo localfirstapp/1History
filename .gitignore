@@ -3,3 +3,6 @@
 onehistory
 *zip
 *zip.sha256sum
+static/dist/
+frontend/node_modules/
+.superpowers/

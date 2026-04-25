@@ -3,10 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>1History - Search</title>
+  <link rel="icon" href="/static/img/history.ico">
+  <title>1History Search</title>
 </head>
 <body>
-  <h1 class="text-2xl font-bold">Search</h1>
-  <script type="module" src="../src/main.js"></script>
+  <nav>
+    <div style="display:flex;align-items:center;gap:16px">
+      <a class="nav-brand" href="/">1History</a>
+      <span style="color:var(--text-muted);font-size:13px" id="filter-summary"></span>
+    </div>
+    <button id="theme-toggle" class="btn-outline" title="Toggle theme">🌙</button>
+  </nav>
+
+  <div style="padding:24px;max-width:1200px;margin:0 auto">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <input id="filter-input" type="search" placeholder="Filter results..."
+        style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:14px">
+      <span style="color:var(--text-muted);font-size:13px;white-space:nowrap" id="result-count"></span>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div style="display:grid;grid-template-columns:160px 1fr;padding:8px 16px;background:var(--bg-card);border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;color:var(--text-muted);text-transform:uppercase;font-weight:600">Time</span>
+        <span style="font-size:12px;color:var(--text-muted);text-transform:uppercase;font-weight:600">Title</span>
+      </div>
+      <div id="virtual-container" style="height:calc(100vh - 180px);overflow-y:auto;position:relative">
+        <div id="virtual-total-height"></div>
+        <div id="virtual-rows" style="position:absolute;top:0;left:0;right:0"></div>
+      </div>
+    </div>
+  </div>
+
+  <script id="server-data" type="application/json">
+  {
+    "visits": {{ visit_details }},
+    "keyword": "{{ keyword | escape }}",
+    "startYmd": "{{ start_ymd }}",
+    "endYmd": "{{ end_ymd }}"
+  }
+  </script>
+  <script type="module" src="../src/search.js"></script>
 </body>
 </html>

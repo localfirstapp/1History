@@ -3,10 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>1History - Details</title>
+  <link rel="icon" href="/static/img/history.ico">
+  <title>1History — {{ ymd }}</title>
 </head>
 <body>
-  <h1 class="text-2xl font-bold">Details</h1>
-  <script type="module" src="../src/main.js"></script>
+  <nav>
+    <div style="display:flex;align-items:center;gap:16px">
+      <a class="nav-brand" href="/">1History</a>
+      <a href="/details/{{ format_as_ymd(ymd_ts - 3600000*24) }}?{{ {"keyword": keyword} | urlencode }}" class="btn-outline" style="text-decoration:none;font-size:12px">← Yesterday</a>
+      <span style="font-weight:600">{{ ymd }}</span>
+      <a href="/details/{{ format_as_ymd(ymd_ts + 3600000*24) }}?{{ {"keyword": keyword} | urlencode }}" class="btn-outline" style="text-decoration:none;font-size:12px">Tomorrow →</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <input id="keyword" type="search" placeholder="Filter..."
+        style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px"
+        value="{{ keyword }}">
+      <button class="btn" id="submit">Search</button>
+      <span style="color:var(--text-muted);font-size:13px">{{ visit_details | length }} results</span>
+      <button id="theme-toggle" class="btn-outline" title="Toggle theme">🌙</button>
+    </div>
+  </nav>
+
+  <div style="padding:24px;max-width:1200px;margin:0 auto">
+    <div class="card" style="padding:0;overflow:hidden">
+      <table>
+        <thead><tr><th style="width:120px">Time</th><th>Title</th></tr></thead>
+        <tbody>
+          {% for detail in visit_details %}
+          <tr>
+            <td style="white-space:nowrap;color:var(--text-muted)">{{ format_as_hms(detail.visit_time) }}</td>
+            <td><a href="{{ detail.url }}">{{ format_title(detail.title, detail.url) }}</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script type="module" src="../src/details.js"></script>
 </body>
 </html>
