@@ -16,7 +16,6 @@
 ### Bug Fixes
 
 - Fix end date being exclusive when passed as a query parameter (searches now include the full end day)
-- Fix memory leak: finished backup jobs are evicted after 1 hour
 
 ## v0.3.5 (2026-04-24)
 
