@@ -24,7 +24,12 @@ const fp = flatpickr('#date-range', {
   minDate: new Date(d.minTime),
   maxDate: new Date(d.maxTime),
 })
-fp.setDate([d.startYmd, d.endYmd], false)
+// Parse YYYY-MM-DD as local time (not UTC) to avoid timezone off-by-one
+function parseLocalDate(ymd) {
+  const [y, m, day] = ymd.split('-').map(Number)
+  return new Date(y, m - 1, day)
+}
+fp.setDate([parseLocalDate(d.startYmd), parseLocalDate(d.endYmd)], false)
 
 document.getElementById('keyword').value = d.keyword
 
