@@ -81,6 +81,25 @@ onehistory backup -d -f ~/some-dir/History -f ~/another-dir/places.sqlite
 
 ## Installation
 
+### Script (Linux / macOS)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/localfirstapp/1History/main/install.sh | sh
+```
+
+Options:
+
+```bash
+# Install a specific version
+sh install.sh --version v0.4.0
+
+# Install to a custom directory
+sh install.sh --prefix /usr/local/bin
+
+# Use a mirror for users in China
+sh install.sh --china
+```
+
 ### Homebrew
 
 ```bash
