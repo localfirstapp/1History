@@ -43,8 +43,9 @@ pub fn backup_to_log(
             Arc::clone(&log_lines),
         );
         if !dry_run {
-            let (affected, duplicated) =
-                db.persist(record_path, rows, collector).context("persist")?;
+            let (affected, duplicated) = db
+                .persist(record_path, rows, collector)
+                .context("persist")?;
             total_affected += affected;
             total_duplicated += duplicated;
         }
@@ -103,8 +104,9 @@ pub fn backup(history_files: Vec<String>, db_file: String, dry_run: bool) -> Res
         info!("Begin backup {}...", record_path);
         let collector = TUICollector::new(rows.len() as u64);
         if !dry_run {
-            let (affected, duplicated) =
-                db.persist(record_path, rows, collector).context("persist")?;
+            let (affected, duplicated) = db
+                .persist(record_path, rows, collector)
+                .context("persist")?;
             debug!(
                 "{:?} affected:{}, duplicated:{}",
                 s.name(),
