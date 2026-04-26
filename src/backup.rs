@@ -159,7 +159,7 @@ pub fn backup(
     };
     if log_lines.is_none() {
         info!(
-            "Summary\nFound:{}, Imported:{}, Duplicated: {}, Failed:{}",
+            "Summary\nFound:{}, Imported:{}, Duplicated: {}, Failed files:{}",
             result.found, result.imported, result.duplicated, result.failed
         );
     }
