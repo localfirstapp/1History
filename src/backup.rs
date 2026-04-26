@@ -123,28 +123,16 @@ pub fn backup(
             Ok((name, rows)) => {
                 if let Err(e) = persist(name, his_file, rows) {
                     failed += 1;
-                    let msg = if log_lines.is_some() {
-                        format!("Skip {}: {e:#}", his_file)
-                    } else {
-                        format!("Skip backup {}: {e:#}", his_file)
-                    };
+                    let msg = format!("Skip {his_file}: {e:#}");
                     info!("{msg}");
                     push_log(&log_lines, msg);
                 }
             }
             Err((direct_err, retry_err)) => {
                 failed += 1;
-                let msg = if log_lines.is_some() {
-                    format!(
-                        "Skip {}: direct read failed: {direct_err:#}; temp copy retry failed: {retry_err:#}",
-                        his_file
-                    )
-                } else {
-                    format!(
-                        "Skip backup {}: direct read failed: {direct_err:#}; temp copy retry failed: {retry_err:#}",
-                        his_file
-                    )
-                };
+                let msg = format!(
+                    "Skip {his_file}: direct read failed: {direct_err:#}; temp copy retry failed: {retry_err:#}"
+                );
                 info!("{msg}");
                 push_log(&log_lines, msg);
             }
