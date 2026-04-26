@@ -1,5 +1,4 @@
 use std::fs;
-use std::io::Write;
 use std::sync::{Arc, Mutex};
 
 use crate::progress::{LogCollector, ProgressCollector, TUICollector};
