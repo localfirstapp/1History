@@ -28,10 +28,8 @@ fn load_rows_from_temp_copy(
     start: i64,
     end: i64,
 ) -> Result<(SourceName, Vec<VisitDetail>)> {
-    let mut tmp = tempfile::NamedTempFile::new().context("create temp file")?;
-    let body = fs::read(path).with_context(|| format!("read source file {path}"))?;
-    tmp.write_all(&body)
-        .with_context(|| format!("write temp copy for {path}"))?;
+    let tmp = tempfile::NamedTempFile::new().context("create temp file")?;
+    fs::copy(path, tmp.path()).with_context(|| format!("copy source file {path} to temp"))?;
     let tmp_path = tmp.into_temp_path();
     let tmp_str = tmp_path.to_string_lossy().to_string();
     load_rows(&tmp_str, start, end)
