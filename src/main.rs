@@ -128,7 +128,7 @@ fn run(cli: Cli) -> Result<()> {
                 detect_history_files()
             };
             files.extend(history_files);
-            backup::backup(files, cli.db_file, dry_run)
+            backup::backup(files, cli.db_file, dry_run, None).map(|_| ())
         }
     }
 }
