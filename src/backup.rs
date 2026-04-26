@@ -151,17 +151,10 @@ pub fn backup(
         }
     }
 
-    let result = BackupResult {
+    Ok(BackupResult {
         found,
         imported: total_affected,
         duplicated: total_duplicated,
         failed,
-    };
-    if log_lines.is_none() {
-        info!(
-            "Summary\nFound:{}, Imported:{}, Duplicated: {}, Failed files:{}",
-            result.found, result.imported, result.duplicated, result.failed
-        );
-    }
-    Ok(result)
+    })
 }

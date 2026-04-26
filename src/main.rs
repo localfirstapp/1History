@@ -128,7 +128,12 @@ fn run(cli: Cli) -> Result<()> {
                 detect_history_files()
             };
             files.extend(history_files);
-            backup::backup(files, cli.db_file, dry_run, None).map(|_| ())
+            let result = backup::backup(files, cli.db_file, dry_run, None)?;
+            info!(
+                "Summary\nFound:{}, Imported:{}, Duplicated: {}, Failed files:{}",
+                result.found, result.imported, result.duplicated, result.failed
+            );
+            Ok(())
         }
     }
 }
