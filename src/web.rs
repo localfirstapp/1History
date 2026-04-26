@@ -1,5 +1,5 @@
 use crate::{
-    backup::backup_to_log,
+    backup::backup,
     database::Database,
     types::{
         BackupJobResponse, BackupPollResponse, BackupRequest, BackupSummary, ClientError,
@@ -302,12 +302,13 @@ impl Server {
                 detect_history_files()
             };
             files.extend(req.files);
-            match backup_to_log(files, db_file, req.dry_run, Arc::clone(&log_lines)) {
+            match backup(files, db_file, req.dry_run, Some(Arc::clone(&log_lines))) {
                 Ok(result) => {
                     *summary_store.lock().unwrap() = Some(BackupSummary {
                         found: result.found,
                         imported: result.imported,
                         duplicated: result.duplicated,
+                        failed: result.failed,
                         error: None,
                     });
                     *status.lock().unwrap() = "done".to_string();
@@ -317,6 +318,7 @@ impl Server {
                         found: 0,
                         imported: 0,
                         duplicated: 0,
+                        failed: 0,
                         error: Some(format!("{e:?}")),
                     });
                     *status.lock().unwrap() = "error".to_string();
