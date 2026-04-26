@@ -66,6 +66,7 @@ pub struct BackupSummary {
     pub found: usize,
     pub imported: usize,
     pub duplicated: usize,
+    pub failed: usize,
     pub error: Option<String>,
 }
 

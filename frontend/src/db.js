@@ -124,7 +124,7 @@ document.getElementById('start-backup').addEventListener('click', async () => {
         summaryEl.style.display = 'block'
         summaryEl.innerHTML = s.error
           ? `<span style="color:red">Error: ${esc(s.error)}</span>`
-          : `Found: <strong>${s.found}</strong> &nbsp; Imported: <strong>${s.imported}</strong> &nbsp; Duplicates: <strong>${s.duplicated}</strong>`
+          : `Found: <strong>${s.found}</strong> &nbsp; Imported: <strong>${s.imported}</strong> &nbsp; Duplicates: <strong>${s.duplicated}</strong> &nbsp; Failed: <strong>${s.failed}</strong>`
       }
       if (data.status === 'done') loadStatus()
     }

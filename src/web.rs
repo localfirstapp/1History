@@ -308,6 +308,7 @@ impl Server {
                         found: result.found,
                         imported: result.imported,
                         duplicated: result.duplicated,
+                        failed: result.failed,
                         error: None,
                     });
                     *status.lock().unwrap() = "done".to_string();
@@ -317,6 +318,7 @@ impl Server {
                         found: 0,
                         imported: 0,
                         duplicated: 0,
+                        failed: 0,
                         error: Some(format!("{e:?}")),
                     });
                     *status.lock().unwrap() = "error".to_string();

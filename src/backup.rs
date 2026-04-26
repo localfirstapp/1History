@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use crate::progress::{LogCollector, TUICollector};
 use crate::source::Source;
+use crate::types::{SourceName, VisitDetail};
 use crate::{database::Database, util::full_timerange};
 use anyhow::{Context, Error, Result};
 use log::{debug, info};
@@ -12,6 +13,28 @@ pub struct BackupResult {
     pub found: usize,
     pub imported: usize,
     pub duplicated: usize,
+    pub failed: usize,
+}
+
+fn load_rows(path: &str, start: i64, end: i64) -> Result<(SourceName, Vec<VisitDetail>)> {
+    let s = Source::open(path).context("open")?;
+    let name = s.name();
+    let rows = s.select(start, end).context("select")?.collect::<Vec<_>>();
+    Ok((name, rows))
+}
+
+fn load_rows_from_temp_copy(
+    path: &str,
+    start: i64,
+    end: i64,
+) -> Result<(SourceName, Vec<VisitDetail>)> {
+    let mut tmp = tempfile::NamedTempFile::new().context("create temp file")?;
+    let body = fs::read(path).with_context(|| format!("read source file {path}"))?;
+    tmp.write_all(&body)
+        .with_context(|| format!("write temp copy for {path}"))?;
+    let tmp_path = tmp.into_temp_path();
+    let tmp_str = tmp_path.to_string_lossy().to_string();
+    load_rows(&tmp_str, start, end)
 }
 
 pub fn backup_to_log(
@@ -26,20 +49,18 @@ pub fn backup_to_log(
     let mut found = 0;
     let mut total_affected = 0;
     let mut total_duplicated = 0;
+    let mut failed = 0;
 
-    // open_path: file to read from; record_path: path stored in import_records
-    let mut persist = |open_path: &str, record_path: &str| {
-        let s = Source::open(open_path).context("open")?;
-        let rows = s.select(start, end).context("select")?.collect::<Vec<_>>();
-        found += rows.len();
+    let mut persist = |name: SourceName, record_path: &str, rows: Vec<VisitDetail>| {
+        let row_count = rows.len();
+        found += row_count;
         log_lines.lock().unwrap().push(format!(
             "Processing {} ({} records)...",
-            record_path,
-            rows.len()
+            record_path, row_count
         ));
         let collector = LogCollector::new(
             record_path.to_string(),
-            rows.len() as u64,
+            row_count as u64,
             Arc::clone(&log_lines),
         );
         if !dry_run {
@@ -49,6 +70,7 @@ pub fn backup_to_log(
             total_affected += affected;
             total_duplicated += duplicated;
         }
+        debug!("{name:?} select {row_count} histories");
         log_lines
             .lock()
             .unwrap()
@@ -57,24 +79,31 @@ pub fn backup_to_log(
     };
 
     for his_file in &history_files {
-        if let Err(e) = persist(his_file, his_file) {
-            let msg = format!("{e:?}");
-            if msg.contains("The database file is locked") {
-                let mut tmp = match tempfile::NamedTempFile::new() {
-                    Ok(f) => f,
-                    Err(_) => continue,
-                };
-                let body = match fs::read(his_file) {
-                    Ok(v) => v,
-                    Err(_) => continue,
-                };
-                if tmp.write_all(&body).is_err() {
-                    continue;
+        let loaded = match load_rows(his_file, start, end) {
+            Ok(loaded) => Ok(loaded),
+            Err(e) => {
+                debug!("Direct source read failed for {his_file}: {e:?}");
+                load_rows_from_temp_copy(his_file, start, end).map_err(|retry_err| (e, retry_err))
+            }
+        };
+
+        match loaded {
+            Ok((name, rows)) => {
+                if let Err(e) = persist(name, his_file, rows) {
+                    failed += 1;
+                    let msg = format!("Skip {}: {e:#}", his_file);
+                    info!("{msg}");
+                    log_lines.lock().unwrap().push(msg);
                 }
-                let tmp_path = tmp.into_temp_path();
-                let tmp_str = tmp_path.to_string_lossy().to_string();
-                // use his_file as record_path so import_records shows the real path
-                let _ = persist(&tmp_str, his_file);
+            }
+            Err((direct_err, retry_err)) => {
+                failed += 1;
+                let msg = format!(
+                    "Skip {}: direct read failed: {direct_err:#}; temp copy retry failed: {retry_err:#}",
+                    his_file
+                );
+                info!("{msg}");
+                log_lines.lock().unwrap().push(msg);
             }
         }
     }
@@ -83,6 +112,7 @@ pub fn backup_to_log(
         found,
         imported: total_affected,
         duplicated: total_duplicated,
+        failed,
     })
 }
 
@@ -95,23 +125,21 @@ pub fn backup(history_files: Vec<String>, db_file: String, dry_run: bool) -> Res
     let mut found = 0;
     let mut total_affected = 0;
     let mut total_duplicated = 0;
-    let mut persist = |open_path: &str, record_path: &str| {
-        let s = Source::open(open_path).context("open")?;
-        let rows = s.select(start, end).context("select")?.collect::<Vec<_>>();
-        debug!("{:?} select {} histories", s.name(), rows.len());
-        found += rows.len();
+    let mut failed = 0;
+    let mut persist = |name: SourceName, record_path: &str, rows: Vec<VisitDetail>| {
+        let row_count = rows.len();
+        debug!("{name:?} select {row_count} histories");
+        found += row_count;
 
         info!("Begin backup {}...", record_path);
-        let collector = TUICollector::new(rows.len() as u64);
+        let collector = TUICollector::new(row_count as u64);
         if !dry_run {
             let (affected, duplicated) = db
                 .persist(record_path, rows, collector)
                 .context("persist")?;
             debug!(
                 "{:?} affected:{}, duplicated:{}",
-                s.name(),
-                affected,
-                duplicated
+                name, affected, duplicated
             );
             total_affected += affected;
             total_duplicated += duplicated;
@@ -121,31 +149,33 @@ pub fn backup(history_files: Vec<String>, db_file: String, dry_run: bool) -> Res
         Ok::<_, Error>(())
     };
     for his_file in &history_files {
-        if let Err(e) = persist(his_file, his_file) {
-            let msg = format!("{e:?}");
-            if msg.contains("The database file is locked") {
-                debug!("Open database directly failed, copy to temp and backup again");
-                let mut tmp = match tempfile::NamedTempFile::new() {
-                    Ok(f) => f,
-                    Err(_) => continue,
-                };
-                let body = match fs::read(his_file) {
-                    Ok(v) => v,
-                    Err(_) => continue,
-                };
-                if let Err(e) = tmp.write_all(&body) {
-                    debug!("Copy to backup file failed, msg:{e}");
-                    continue;
+        let loaded = match load_rows(his_file, start, end) {
+            Ok(loaded) => Ok(loaded),
+            Err(e) => {
+                debug!("Direct source read failed for {his_file}: {e:?}");
+                load_rows_from_temp_copy(his_file, start, end).map_err(|retry_err| (e, retry_err))
+            }
+        };
+
+        match loaded {
+            Ok((name, rows)) => {
+                if let Err(e) = persist(name, his_file, rows) {
+                    failed += 1;
+                    info!("Skip backup {}: {e:#}", his_file);
                 }
-                let tmp_path = tmp.into_temp_path();
-                let tmp_str = tmp_path.to_string_lossy().to_string();
-                if let Err(e) = persist(&tmp_str, his_file) {
-                    debug!("{his_file} persist failed, backup:{tmp_str}, err: {e:?}");
-                }
+            }
+            Err((direct_err, retry_err)) => {
+                failed += 1;
+                info!(
+                    "Skip backup {}: direct read failed: {direct_err:#}; temp copy retry failed: {retry_err:#}",
+                    his_file
+                );
             }
         }
     }
 
-    info!("Summary\nFound:{found}, Imported:{total_affected}, Duplicated: {total_duplicated}");
+    info!(
+        "Summary\nFound:{found}, Imported:{total_affected}, Duplicated: {total_duplicated}, Failed:{failed}"
+    );
     Ok(())
 }
