@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.4.1 (2026-04-26)
+
+### Bug Fixes
+
+- Fix incorrect `last_import` timestamps on the Database page.
+- Preserve the original browser history file path in import records when a locked database is copied to a temporary file during backup.
+
+### Maintenance
+
+- Add a GitHub Actions workflow to mirror the repository to Sourcecraft on every push to `main` and `master`.
+
 ## v0.4.0 (2026-04-25)
 
 ### New Features
