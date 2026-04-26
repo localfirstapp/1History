@@ -1,0 +1,22 @@
+name: Mirror
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  codeberg:
+    if: github.repository_owner == 'localfirstapp'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Sourcecraft
+        if: always()
+        run: |
+          # https://sourcecraft.dev/jiacai2050/1history
+          git push --tags --force \
+          https://git:${{ secrets.SOURCECRAFT_TOKEN }}@git.sourcecraft.dev/jiacai2050/1history.git \
+          "refs/remotes/origin/*:refs/heads/*"
