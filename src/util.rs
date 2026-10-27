@@ -1,8 +1,8 @@
 use anyhow::Context;
-use chrono::{DateTime, Local, NaiveDate, TimeZone, Utc};
+use chrono::{DateTime, Local, LocalResult, NaiveDate, TimeZone, Utc};
 use home::home_dir;
 use lazy_static::lazy_static;
-use log::debug;
+use log::{debug, warn};
 use minijinja::State;
 use regex::Regex;
 use std::collections::HashMap;
@@ -105,28 +105,76 @@ fn join_path(mut base: PathBuf, rest: &str) -> String {
     base.into_os_string().into_string().unwrap()
 }
 
+#[allow(dead_code)]
 fn default_location(filename: &str) -> String {
     let base = home_dir().unwrap_or_else(temp_dir);
     join_path(base, filename)
 }
 
 pub fn tomorrow_midnight() -> i64 {
-    let now = Local::now().date_naive();
-    let dt = Local
-        .from_local_datetime(&now.and_hms_opt(0, 0, 0).unwrap())
-        .unwrap();
-    dt.timestamp_millis() + 24 * 3_600_000
+    let today = Local::now().date_naive();
+    // succ_opt() is None only at NaiveDate::MAX, so this fallback is purely defensive.
+    let tomorrow = today.succ_opt().unwrap_or(today);
+    local_start_of_day_ms(tomorrow)
 }
 
 pub fn ymd_midnight(ymd: &str) -> anyhow::Result<i64> {
     let nd = NaiveDate::parse_from_str(ymd, r"%Y-%m-%d")
         .with_context(|| format!("Invalid format: {ymd}"))?;
-    let dt = Local
-        .from_local_datetime(&nd.and_hms_opt(0, 0, 0).unwrap())
-        .unwrap();
-    Ok(dt.timestamp_millis())
+    Ok(local_start_of_day_ms(nd))
 }
 
+/// Start of the given local day in epoch millis. Never fails for a valid date.
+fn local_start_of_day_ms(nd: NaiveDate) -> i64 {
+    let start = nd.and_hms_opt(0, 0, 0).unwrap();
+    let mut none_logged = false;
+
+    let dt = 'search: {
+        // At most 48h of 1-minute steps: real gaps are <= 1h and a fully
+        // skipped day is <= 24h, so this bound is never reached in practice.
+        for minute in 0..=48 * 60 {
+            let naive = start + chrono::Duration::minutes(minute);
+            match Local.from_local_datetime(&naive) {
+                LocalResult::Single(dt) => break 'search dt,
+                // Fall-back DST transition: midnight occurred twice. Pick the earlier instant:
+                LocalResult::Ambiguous(earliest, _latest) => {
+                    debug!(
+                        "Ambiguous local midnight for {}, using earliest {earliest}",
+                        nd.format("%Y-%m-%d")
+                    );
+                    break 'search earliest;
+                }
+                // Spring-forward DST transition: midnight was skipped entirely.
+                // Walk forward to the first valid local instant that day.
+                LocalResult::None => {
+                    if !none_logged {
+                        debug!(
+                            "No local midnight for {} (DST gap), advancing to first valid instant",
+                            nd.format("%Y-%m-%d")
+                        );
+                        none_logged = true;
+                    }
+                }
+            }
+        }
+        // Only reachable if tz data is broken; never hang or fail the timeline.
+        warn!(
+            "No valid local time found near {}, treating as UTC",
+            nd.format("%Y-%m-%d")
+        );
+        return start.and_utc().timestamp_millis();
+    };
+
+    // Fully skipped day (e.g. Samoa 2011-12-30): we walked into the next day.
+    if dt.date_naive() != nd {
+        warn!(
+            "{} does not exist locally (whole day skipped), using {dt}",
+            nd.format("%Y-%m-%d")
+        );
+    }
+
+    return dt.timestamp_millis();
+}
 pub fn unixepoch_as_ymd(ts: i64) -> String {
     let dt: DateTime<Local> = Utc.timestamp_opt(ts / 1000, 0).unwrap().into();
     dt.format(r"%Y-%m-%d").to_string()
